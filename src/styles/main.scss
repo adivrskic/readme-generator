@@ -1,0 +1,324 @@
+@use "variables" as *;
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: $font-sans;
+  background-color: $bg-primary;
+  color: $text-primary;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+.app {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: $spacing-xl $spacing-md;
+
+  &__header {
+    text-align: center;
+    margin-bottom: $spacing-xxl;
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 600;
+      margin-bottom: $spacing-sm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: $spacing-sm;
+
+      svg {
+        color: $accent;
+      }
+    }
+
+    p {
+      color: $text-secondary;
+      font-size: 1.1rem;
+    }
+  }
+
+  &__rate-limit {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: $spacing-md;
+    font-size: 0.85rem;
+    color: $text-secondary;
+
+    &--warning {
+      color: $warning;
+    }
+
+    &--danger {
+      color: $error;
+    }
+  }
+}
+
+// Repo Input
+.repo-input {
+  background-color: $bg-secondary;
+  border: 1px solid $border-color;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
+
+  &__form {
+    display: flex;
+    gap: $spacing-md;
+
+    @media (max-width: 600px) {
+      flex-direction: column;
+    }
+  }
+
+  &__field {
+    flex: 1;
+    position: relative;
+
+    svg {
+      position: absolute;
+      left: $spacing-md;
+      top: 50%;
+      transform: translateY(-50%);
+      color: $text-secondary;
+    }
+
+    input {
+      width: 100%;
+      padding: $spacing-md $spacing-md $spacing-md $spacing-xl + $spacing-md;
+      background-color: $bg-tertiary;
+      border: 1px solid $border-color;
+      border-radius: $radius-md;
+      color: $text-primary;
+      font-size: 1rem;
+      transition: border-color $transition-fast;
+
+      &::placeholder {
+        color: $text-secondary;
+      }
+
+      &:focus {
+        outline: none;
+        border-color: $accent;
+      }
+    }
+  }
+
+  &__submit {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    padding: $spacing-md $spacing-lg;
+    background-color: $accent;
+    color: $bg-primary;
+    border: none;
+    border-radius: $radius-md;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color $transition-fast;
+
+    &:hover:not(:disabled) {
+      background-color: $accent-hover;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  &__error {
+    margin-top: $spacing-md;
+    padding: $spacing-md;
+    background-color: rgba($error, 0.1);
+    border: 1px solid $error;
+    border-radius: $radius-md;
+    color: $error;
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+  }
+
+  &__stage {
+    margin-top: $spacing-md;
+    color: $text-secondary;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+  }
+}
+
+// Section Options
+.section-options {
+  background-color: $bg-secondary;
+  border: 1px solid $border-color;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
+
+  &__title {
+    font-size: 0.9rem;
+    color: $text-secondary;
+    margin-bottom: $spacing-md;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: $spacing-sm;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    padding: $spacing-sm $spacing-md;
+    background-color: $bg-tertiary;
+    border-radius: $radius-sm;
+    cursor: pointer;
+    transition: background-color $transition-fast;
+
+    &:hover {
+      background-color: lighten($bg-tertiary, 5%);
+    }
+
+    input {
+      accent-color: $accent;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    label {
+      font-size: 0.9rem;
+      cursor: pointer;
+      user-select: none;
+    }
+  }
+}
+
+// Readme Output
+.readme-output {
+  background-color: $bg-secondary;
+  border: 1px solid $border-color;
+  border-radius: $radius-lg;
+  overflow: hidden;
+
+  &__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: $spacing-md $spacing-lg;
+    background-color: $bg-tertiary;
+    border-bottom: 1px solid $border-color;
+
+    h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: $spacing-sm;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    gap: $spacing-sm;
+  }
+
+  &__btn {
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+    padding: $spacing-sm $spacing-md;
+    background-color: $bg-secondary;
+    border: 1px solid $border-color;
+    border-radius: $radius-sm;
+    color: $text-primary;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all $transition-fast;
+
+    &:hover {
+      background-color: $bg-tertiary;
+      border-color: $accent;
+    }
+
+    &--success {
+      color: $success;
+      border-color: $success;
+    }
+  }
+
+  &__content {
+    padding: $spacing-lg;
+    max-height: 600px;
+    overflow-y: auto;
+
+    pre {
+      font-family: $font-mono;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+  }
+
+  &__empty {
+    padding: $spacing-xxl;
+    text-align: center;
+    color: $text-secondary;
+
+    svg {
+      margin-bottom: $spacing-md;
+      opacity: 0.5;
+    }
+
+    p {
+      font-size: 0.95rem;
+    }
+  }
+}
+
+// Scrollbar
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: $bg-secondary;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $border-color;
+  border-radius: 4px;
+
+  &:hover {
+    background: $text-secondary;
+  }
+}
+
+// Animations
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
