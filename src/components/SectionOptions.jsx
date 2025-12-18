@@ -1,14 +1,37 @@
 import React from "react";
+import {
+  Award,
+  Zap,
+  Download,
+  PlayCircle,
+  Layers,
+  GitPullRequest,
+  Scale,
+  BookOpen,
+  Image,
+  Map,
+  HelpCircle,
+  Shield,
+  Settings,
+  FlaskConical,
+} from "lucide-react";
 
 const SectionOptions = ({ sections, setSections }) => {
-  const sectionLabels = {
-    badges: "Badges",
-    features: "Features",
-    installation: "Installation",
-    usage: "Usage",
-    techStack: "Tech Stack",
-    contributing: "Contributing",
-    license: "License",
+  const sectionConfig = {
+    badges: { label: "Badges", icon: Award },
+    features: { label: "Features", icon: Zap },
+    installation: { label: "Installation", icon: Download },
+    usage: { label: "Usage", icon: PlayCircle },
+    techStack: { label: "Tech Stack", icon: Layers },
+    apiReference: { label: "API", icon: BookOpen },
+    configuration: { label: "Config", icon: Settings },
+    screenshots: { label: "Screenshots", icon: Image },
+    testing: { label: "Testing", icon: FlaskConical },
+    roadmap: { label: "Roadmap", icon: Map },
+    faq: { label: "FAQ", icon: HelpCircle },
+    contributing: { label: "Contributing", icon: GitPullRequest },
+    security: { label: "Security", icon: Shield },
+    license: { label: "License", icon: Scale },
   };
 
   const handleToggle = (key) => {
@@ -20,18 +43,20 @@ const SectionOptions = ({ sections, setSections }) => {
 
   return (
     <div className="section-options">
-      <h3 className="section-options__title">Include Sections</h3>
+      <h3 className="section-options__title">Sections</h3>
       <div className="section-options__grid">
-        {Object.entries(sectionLabels).map(([key, label]) => (
-          <div key={key} className="section-options__item">
-            <input
-              type="checkbox"
-              id={key}
-              checked={sections[key]}
-              onChange={() => handleToggle(key)}
-            />
-            <label htmlFor={key}>{label}</label>
-          </div>
+        {Object.entries(sectionConfig).map(([key, { label, icon: Icon }]) => (
+          <button
+            key={key}
+            type="button"
+            className={`section-options__pill ${
+              sections[key] ? "section-options__pill--active" : ""
+            }`}
+            onClick={() => handleToggle(key)}
+          >
+            <Icon />
+            {label}
+          </button>
         ))}
       </div>
     </div>

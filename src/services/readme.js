@@ -29,12 +29,19 @@ export const generateReadme = async (repoData, sections) => {
 
 const buildPrompt = (repoData, enabledSections) => {
   const sectionDescriptions = {
-    badges: "Badges (stars, forks, license, language)",
-    features: "Features section",
-    installation: "Installation instructions",
-    usage: "Usage examples",
-    techStack: "Tech stack / dependencies",
+    badges: "Badges (stars, forks, license, language shields.io badges)",
+    features: "Features section highlighting key capabilities",
+    installation: "Installation instructions with commands",
+    usage: "Usage examples with code snippets",
+    techStack: "Tech stack / dependencies list",
+    apiReference: "API Reference with endpoints or methods",
+    configuration: "Configuration options and environment variables",
+    screenshots: "Screenshots section with placeholder image syntax",
+    testing: "Testing instructions and commands",
+    roadmap: "Roadmap with planned features",
+    faq: "FAQ section with common questions",
     contributing: "Contributing guidelines",
+    security: "Security policy and reporting vulnerabilities",
     license: "License section",
   };
 
@@ -99,5 +106,8 @@ INSTRUCTIONS:
 4. For installation, use appropriate commands based on the detected package manager/language
 5. For usage, provide realistic examples based on what the project appears to do
 6. Use shields.io badge format if badges are requested
-7. Output ONLY the raw markdown, no explanations or code fences`;
+7. For screenshots section, use placeholder syntax: ![Screenshot](screenshots/screenshot.png)
+8. For API reference, infer endpoints or methods from the codebase structure
+9. For configuration, list environment variables or config options if detectable
+10. Output ONLY the raw markdown, no explanations or code fences`;
 };
