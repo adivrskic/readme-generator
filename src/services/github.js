@@ -53,17 +53,18 @@ const fetchWithRateLimit = async (url) => {
 };
 
 export const parseGitHubUrl = (url) => {
-  const patterns = [
-    /github\.com\/([^\/]+)\/([^\/\?#]+)/,
-    /^([^\/]+)\/([^\/]+)$/,
-  ];
+  const patterns = [/github\.com\/([^/]+)\/([^/?#]+)/, /^([^/]+)\/([^/]+)$/];
 
   for (const pattern of patterns) {
     const match = url.trim().match(pattern);
     if (match) {
-      return { owner: match[1], repo: match[2].replace(/\.git$/, "") };
+      return {
+        owner: match[1],
+        repo: match[2].replace(/\.git$/, ""),
+      };
     }
   }
+
   return null;
 };
 

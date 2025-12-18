@@ -1,12 +1,5 @@
 import React from "react";
-import {
-  FileText,
-  Pencil,
-  Eye,
-  Copy,
-  Download,
-  GitPullRequest,
-} from "lucide-react";
+import { Pencil, Eye, Copy, Download, GitPullRequest } from "lucide-react";
 
 const ReadmePlaceholder = ({ loading }) => {
   return (
