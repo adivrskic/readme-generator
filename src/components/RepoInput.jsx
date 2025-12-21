@@ -1,5 +1,5 @@
 import React from "react";
-import { Github, Sparkles, Loader2, AlertCircle } from "lucide-react";
+import { Github, Loader2, AlertCircle } from "lucide-react";
 
 const RepoInput = ({
   repoUrl,
