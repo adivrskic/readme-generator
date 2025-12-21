@@ -38,10 +38,7 @@ const RepoInput = ({
               Generating...
             </>
           ) : (
-            <>
-              <Sparkles size={18} />
-              Generate README
-            </>
+            <>Generate README</>
           )}
         </button>
       </form>
@@ -50,13 +47,6 @@ const RepoInput = ({
         <div className="repo-input__error">
           <AlertCircle size={18} />
           {error}
-        </div>
-      )}
-
-      {loading && stage && (
-        <div className="repo-input__stage">
-          <Loader2 size={16} className="spin" />
-          {stage}
         </div>
       )}
     </div>

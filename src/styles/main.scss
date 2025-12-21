@@ -1,15 +1,83 @@
-@use "variables" as *;
+// README Generator - Editorial Design System
+// Warm, sophisticated, editorial aesthetic
 
-* {
+// ═══════════════════════════════════════════════════════════════
+// DESIGN TOKENS
+// ═══════════════════════════════════════════════════════════════
+
+// Color Palette - Warm Earth Tones
+$ink: #1a1814;
+$ink-soft: #3d3a35;
+$ink-muted: #6b6660;
+$stone: #a09a92;
+$sand: #d4cfc6;
+$cream: #f5f2ed;
+$paper: #faf9f7;
+$white: #ffffff;
+
+// Accent Colors - Terracotta & Forest
+$terracotta: #c45d3a;
+$terracotta-deep: #a84b2c;
+$terracotta-light: rgba(196, 93, 58, 0.12);
+$forest: #2d5a47;
+$forest-deep: #234538;
+$forest-light: rgba(45, 90, 71, 0.12);
+$ochre: #d4a03a;
+$ochre-light: rgba(212, 160, 58, 0.12);
+
+// Status
+$success: #3a8f6e;
+$warning: #c9923a;
+$error: #c45d3a;
+
+// Typography
+$font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+$font-body: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+$font-mono: "JetBrains Mono", "SF Mono", Consolas, monospace;
+
+// Spacing Scale
+$space-1: 4px;
+$space-2: 8px;
+$space-3: 12px;
+$space-4: 16px;
+$space-5: 24px;
+$space-6: 32px;
+$space-7: 48px;
+$space-8: 64px;
+$space-9: 96px;
+
+// Radii
+$radius-sm: 4px;
+$radius-md: 8px;
+$radius-lg: 16px;
+$radius-xl: 24px;
+
+// Shadows - Soft & Warm
+$shadow-sm: 0 1px 2px rgba(26, 24, 20, 0.04);
+$shadow-md: 0 4px 12px rgba(26, 24, 20, 0.06), 0 1px 3px rgba(26, 24, 20, 0.04);
+$shadow-lg: 0 12px 32px rgba(26, 24, 20, 0.08),
+  0 4px 12px rgba(26, 24, 20, 0.04);
+$shadow-xl: 0 24px 48px rgba(26, 24, 20, 0.1), 0 8px 24px rgba(26, 24, 20, 0.06);
+
+// Transitions
+$ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+$ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+$duration-fast: 150ms;
+$duration-normal: 300ms;
+$duration-slow: 500ms;
+
+// ═══════════════════════════════════════════════════════════════
+// IMPORTS & RESET
+// ═══════════════════════════════════════════════════════════════
+
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-}
-
-html,
-body,
-#root {
-  height: 100%;
 }
 
 html {
@@ -18,113 +86,249 @@ html {
   text-rendering: optimizeLegibility;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
-  font-family: $font-sans;
-  background-color: $bg-tertiary;
-  color: $text-primary;
-  line-height: 1.5;
-  font-size: 14px;
+  font-family: $font-body;
+  font-size: 15px;
+  line-height: 1.6;
+  color: $ink;
+  background: $cream;
   letter-spacing: -0.01em;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// LAYOUT
+// ═══════════════════════════════════════════════════════════════
+
 .app {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, 1fr);
   min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: 380px 1fr;
+  }
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
+    height: auto;
+    overflow: auto;
   }
 
   &__left {
     display: flex;
     flex-direction: column;
-    gap: $spacing-md;
-    padding: $spacing-xl;
-    background-color: $bg-secondary;
-    overflow-y: auto;
+    background: $cream;
+    border-right: 1px solid $sand;
+    overflow: hidden;
+    height: 100vh;
+
+    // Subtle pattern overlay
+    background-image: radial-gradient(
+        circle at 100% 0%,
+        rgba($terracotta, 0.03) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 0% 100%,
+        rgba($forest, 0.03) 0%,
+        transparent 50%
+      );
 
     @media (max-width: 900px) {
-      padding: $spacing-lg $spacing-md;
+      border-right: none;
+      border-bottom: 1px solid $sand;
+      height: auto;
+      overflow: visible;
     }
   }
 
-  &__right {
+  &__sticky {
+    flex-shrink: 0;
+    padding: $space-5;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: $bg-tertiary;
+    flex-direction: column;
+    gap: $space-4;
+    background: $cream;
+    border-bottom: 1px solid rgba($sand, 0.7);
+  }
+
+  &__scrollable {
+    flex: 1;
     overflow-y: auto;
+    padding: $space-5;
+    display: flex;
+    flex-direction: column;
+    gap: $space-4;
 
     @media (max-width: 900px) {
-      min-height: 400px;
-      padding: $spacing-md;
+      overflow: visible;
+    }
+  }
+
+  &__options-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $space-3;
+  }
+
+  &__right {
+    background: $paper;
+    overflow-y: auto;
+    position: relative;
+
+    // Subtle grain texture
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      opacity: 0.015;
+      pointer-events: none;
+    }
+
+    @media (max-width: 900px) {
+      min-height: 500px;
     }
   }
 
   &__header {
-    margin-bottom: $spacing-sm;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $space-3;
 
-    h1 {
-      font-size: 1.75rem;
-      font-weight: 600;
-      letter-spacing: -0.025em;
-      margin-bottom: 2px;
-      color: $text-primary;
+    &-top {
+      display: flex;
+      align-items: center;
+      gap: $space-3;
     }
 
-    p {
-      color: $text-secondary;
-      font-size: 0.9rem;
-      font-weight: 400;
-      margin-bottom: $spacing-md;
+    &-text {
+      h1 {
+        font-family: $font-display;
+        font-size: 1.25rem;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        color: $ink;
+        line-height: 1.2;
+      }
+
+      p {
+        font-size: 0.8rem;
+        color: $ink-muted;
+        line-height: 1.4;
+      }
     }
   }
 
   &__logo {
     width: 40px;
     height: 40px;
-    background-color: $text-primary;
-    color: $bg-tertiary;
-    border-radius: $radius-sm;
+    min-width: 40px;
+    background: linear-gradient(135deg, $terracotta 0%, $terracotta-deep 100%);
+    color: $white;
+    border-radius: $radius-md;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: $spacing-md;
+    box-shadow: $shadow-sm;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
   }
 
   &__rate-limit {
-    display: inline-flex;
-    font-size: 0.75rem;
-    color: $text-tertiary;
-    font-weight: 500;
-    background-color: $bg-tertiary;
-    padding: 3px $spacing-sm;
-    border-radius: $radius-full;
-    width: fit-content;
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+
+    &-bar {
+      width: 48px;
+      height: 6px;
+      background: $sand;
+      border-radius: 100px;
+      overflow: hidden;
+      position: relative;
+
+      &-fill {
+        height: 100%;
+        background: $forest;
+        border-radius: 100px;
+        transition: width $duration-normal $ease-out,
+          background $duration-normal $ease-out;
+        width: 100%;
+      }
+    }
+
+    &-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: $forest;
+      transition: background $duration-normal $ease-out;
+      box-shadow: 0 0 0 2px rgba($forest, 0.2);
+    }
 
     &--warning {
-      color: $warning;
-      background-color: $orange-light;
+      .app__rate-limit-bar-fill {
+        background: $ochre;
+      }
+      .app__rate-limit-dot {
+        background: $ochre;
+        box-shadow: 0 0 0 2px rgba($ochre, 0.2);
+      }
     }
 
     &--danger {
-      color: $error;
-      background-color: rgba($error, 0.1);
+      .app__rate-limit-bar-fill {
+        background: $terracotta;
+      }
+      .app__rate-limit-dot {
+        background: $terracotta;
+        box-shadow: 0 0 0 2px rgba($terracotta, 0.2);
+        animation: pulse 1.5s ease-in-out infinite;
+      }
     }
   }
 }
 
-// Repo Input
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 2px rgba($terracotta, 0.2);
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 0 4px rgba($terracotta, 0.15);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// REPO INPUT
+// ═══════════════════════════════════════════════════════════════
+
 .repo-input {
-  background-color: $bg-tertiary;
-  border-radius: $radius-lg;
-  padding: $spacing-md;
+  background: $white;
+  border-radius: $radius-xl;
+  padding: $space-5;
+  box-shadow: $shadow-md;
+  border: 1px solid rgba($sand, 0.5);
 
   &__form {
     display: flex;
     flex-direction: column;
-    gap: $spacing-sm;
+    gap: $space-3;
   }
 
   &__field {
@@ -132,41 +336,52 @@ body {
 
     svg {
       position: absolute;
-      left: $spacing-sm + 4px;
+      left: $space-4;
       top: 50%;
       transform: translateY(-50%);
-      color: $text-tertiary;
+      color: $stone;
+      width: 18px;
+      height: 18px;
       pointer-events: none;
-      width: 16px;
-      height: 16px;
+      transition: color $duration-fast $ease-out;
     }
 
     input {
       width: 100%;
-      padding: $spacing-sm + 2px $spacing-sm + 2px $spacing-sm + 2px $spacing-xl +
-        4px;
-      background-color: $bg-secondary;
-      border: 1px solid transparent;
-      border-radius: $radius-md;
-      color: $text-primary;
-      font-size: 0.9rem;
-      font-family: $font-sans;
-      font-weight: 400;
-      transition: all $transition-fast;
+      padding: $space-4 $space-4 $space-4 $space-7 + $space-2;
+      background: $cream;
+      border: 2px solid transparent;
+      border-radius: $radius-lg;
+      color: $ink;
+      font-size: 0.95rem;
+      font-family: $font-body;
+      font-weight: 500;
+      transition: all $duration-fast $ease-out;
 
       &::placeholder {
-        color: $text-tertiary;
+        color: $stone;
+        font-weight: 400;
       }
 
       &:hover {
-        background-color: $bg-hover;
+        background: darken($cream, 2%);
       }
 
       &:focus {
         outline: none;
-        background-color: $bg-tertiary;
-        border-color: $accent;
+        background: $white;
+        border-color: $terracotta;
+        box-shadow: 0 0 0 4px $terracotta-light;
+
+        & + svg,
+        & ~ svg {
+          color: $terracotta;
+        }
       }
+    }
+
+    &:focus-within svg {
+      color: $terracotta;
     }
   }
 
@@ -174,29 +389,32 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: $spacing-xs;
-    padding: $spacing-sm + 2px $spacing-md;
-    background-color: $purple;
-    color: white;
+    gap: $space-2;
+    padding: $space-4;
+    background: linear-gradient(135deg, $forest 0%, $forest-deep 100%);
+    color: $white;
     border: none;
-    border-radius: $radius-md;
-    font-size: 0.9rem;
-    font-weight: 500;
-    font-family: $font-sans;
+    border-radius: $radius-lg;
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: $font-body;
     cursor: pointer;
-    transition: all $transition-fast;
+    transition: all $duration-fast $ease-out;
+    box-shadow: $shadow-sm, inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    letter-spacing: 0.01em;
 
     svg {
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
     }
 
     &:hover:not(:disabled) {
-      background-color: $purple-hover;
+      transform: translateY(-1px);
+      box-shadow: $shadow-md, inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
 
     &:active:not(:disabled) {
-      transform: scale(0.98);
+      transform: translateY(0);
     }
 
     &:disabled {
@@ -206,289 +424,865 @@ body {
   }
 
   &__error {
-    margin-top: $spacing-xs;
-    padding: $spacing-sm $spacing-md;
-    background-color: rgba($error, 0.08);
+    margin-top: $space-2;
+    padding: $space-3 $space-4;
+    background: $terracotta-light;
     border-radius: $radius-md;
-    color: $error;
+    color: $terracotta-deep;
     display: flex;
-    align-items: center;
-    gap: $spacing-xs;
+    align-items: flex-start;
+    gap: $space-2;
     font-size: 0.85rem;
     font-weight: 500;
+    line-height: 1.4;
 
     svg {
-      width: 14px;
-      height: 14px;
+      width: 16px;
+      height: 16px;
       flex-shrink: 0;
+      margin-top: 1px;
     }
   }
 
   &__stage {
-    margin-top: $spacing-xs;
-    color: $text-secondary;
+    margin-top: $space-3;
+    color: $ink-muted;
     font-size: 0.85rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: $spacing-xs;
+    gap: $space-2;
     font-weight: 500;
+    padding: $space-3;
+    background: $forest-light;
+    border-radius: $radius-md;
+    color: $forest;
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TONE SELECTOR (Compact)
+// ═══════════════════════════════════════════════════════════════
+
+.tone-selector {
+  background: $white;
+  border-radius: $radius-lg;
+  padding: $space-4;
+  box-shadow: $shadow-sm;
+  border: 1px solid rgba($sand, 0.5);
+
+  &__title {
+    font-family: $font-display;
+    font-size: 0.7rem;
+    color: $ink-muted;
+    margin-bottom: $space-3;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+  }
+
+  &__options {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+  }
+
+  &__option {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    padding: $space-2;
+    background: $cream;
+    border: 2px solid transparent;
+    border-radius: $radius-md;
+    cursor: pointer;
+    transition: all $duration-fast $ease-out;
+    text-align: left;
+    font-family: $font-body;
+
+    &:hover {
+      background: $sand;
+    }
+
+    &--active {
+      background: $white;
+      border-color: $terracotta;
+
+      .tone-selector__option-icon {
+        background: $terracotta;
+        color: $white;
+      }
+    }
+
+    &-icon {
+      width: 24px;
+      height: 24px;
+      min-width: 24px;
+      background: $sand;
+      border-radius: $radius-sm;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: $ink-muted;
+      transition: all $duration-fast $ease-out;
+
+      svg {
+        width: 12px;
+        height: 12px;
+      }
+    }
+
+    &-content {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    &-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: $ink;
+      line-height: 1.2;
+    }
+
+    &-desc {
+      display: none;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BADGE STYLE PICKER (Compact)
+// ═══════════════════════════════════════════════════════════════
+
+.badge-style-picker {
+  background: $white;
+  border-radius: $radius-lg;
+  padding: $space-4;
+  box-shadow: $shadow-sm;
+  border: 1px solid rgba($sand, 0.5);
+
+  &__title {
+    font-family: $font-display;
+    font-size: 0.7rem;
+    color: $ink-muted;
+    margin-bottom: $space-3;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+  }
+
+  &__options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $space-1;
+  }
+
+  &__option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $space-1;
+    padding: $space-2;
+    background: $cream;
+    border: 2px solid transparent;
+    border-radius: $radius-md;
+    cursor: pointer;
+    transition: all $duration-fast $ease-out;
+    font-family: $font-body;
+
+    &:hover {
+      background: $sand;
+    }
+
+    &--active {
+      background: $white;
+      border-color: $terracotta;
+    }
+  }
+
+  &__preview {
+    display: inline-flex;
+    font-size: 8px;
+    font-family: "Verdana", sans-serif;
+    font-weight: 600;
+    letter-spacing: 0;
+    overflow: hidden;
+
+    &-left {
+      background: #555;
+      color: #fff;
+      padding: 2px 4px;
+    }
+
+    &-right {
+      background: $forest;
+      color: #fff;
+      padding: 2px 4px;
+    }
+
+    &--flat {
+      border-radius: 2px;
+    }
+
+    &--flat-square {
+      border-radius: 0;
+    }
+
+    &--plastic {
+      border-radius: 2px;
+
+      .badge-style-picker__preview-left {
+        background: linear-gradient(180deg, #6b6b6b 0%, #555 100%);
+      }
+
+      .badge-style-picker__preview-right {
+        background: linear-gradient(
+          180deg,
+          lighten($forest, 8%) 0%,
+          $forest 100%
+        );
+      }
+    }
+
+    &--for-the-badge {
+      border-radius: 2px;
+      text-transform: uppercase;
+      font-size: 7px;
+      letter-spacing: 0.3px;
+
+      .badge-style-picker__preview-left,
+      .badge-style-picker__preview-right {
+        padding: 3px 5px;
+      }
+    }
+  }
+
+  &__label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: $ink-muted;
+    transition: color $duration-fast $ease-out;
+  }
+
+  &__option--active &__label {
+    color: $ink;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EMOJI TOGGLE (Compact)
+// ═══════════════════════════════════════════════════════════════
+
+.emoji-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: $white;
+  border-radius: $radius-lg;
+  padding: $space-3 $space-4;
+  box-shadow: $shadow-sm;
+  border: 1px solid rgba($sand, 0.5);
+
+  &__info {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+  }
+
+  &__icon {
+    width: 16px;
+    height: 16px;
+    color: $stone;
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: $ink;
+  }
+
+  &__preview {
+    display: none;
+  }
+
+  &__switch {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    background: $sand;
+    border: none;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: background $duration-fast $ease-out;
+    padding: 0;
+
+    &:hover {
+      background: darken($sand, 5%);
+    }
+
+    &--on {
+      background: $forest;
+
+      &:hover {
+        background: $forest-deep;
+      }
+
+      .emoji-toggle__switch-thumb {
+        transform: translateX(16px);
+      }
+    }
+
+    &-thumb {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      background: $white;
+      border-radius: 50%;
+      box-shadow: $shadow-sm;
+      transition: transform $duration-fast $ease-out;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TOC TOGGLE (Compact)
+// ═══════════════════════════════════════════════════════════════
+
+.toc-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: $white;
+  border-radius: $radius-lg;
+  padding: $space-3 $space-4;
+  box-shadow: $shadow-sm;
+  border: 1px solid rgba($sand, 0.5);
+
+  &__info {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+  }
+
+  &__icon {
+    width: 16px;
+    height: 16px;
+    color: $stone;
+  }
+
+  &__text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: $ink;
+  }
+
+  &__desc {
+    display: none;
+  }
+
+  &__switch {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    background: $sand;
+    border: none;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: background $duration-fast $ease-out;
+    padding: 0;
+
+    &:hover {
+      background: darken($sand, 5%);
+    }
+
+    &--on {
+      background: $forest;
+
+      &:hover {
+        background: $forest-deep;
+      }
+
+      .toc-toggle__switch-thumb {
+        transform: translateX(16px);
+      }
+    }
+
+    &-thumb {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      background: $white;
+      border-radius: 50%;
+      box-shadow: $shadow-sm;
+      transition: transform $duration-fast $ease-out;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION OPTIONS (Drag & Drop with Presets)
+// ═══════════════════════════════════════════════════════════════
+
+.section-options {
+  background: $white;
+  border-radius: $radius-xl;
+  padding: $space-4;
+  box-shadow: $shadow-md;
+  border: 1px solid rgba($sand, 0.5);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: $space-3;
+  }
+
+  &__title {
+    font-family: $font-display;
+    font-size: 0.85rem;
+    color: $ink-soft;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 600;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+  }
+
+  &__hint {
+    font-size: 0.65rem;
+    color: $stone;
+    font-weight: 500;
+  }
+
+  &__preset-dropdown {
+    position: relative;
+  }
+
+  &__preset-trigger {
+    display: flex;
+    align-items: center;
+    gap: $space-1;
+    padding: $space-1 + 2px $space-2;
+    background: $cream;
+    border: 1px solid $sand;
+    border-radius: $radius-sm;
+    font-size: 0.7rem;
+    font-weight: 600;
+    font-family: $font-body;
+    color: $ink-muted;
+    cursor: pointer;
+    transition: all $duration-fast $ease-out;
+
+    svg {
+      width: 12px;
+      height: 12px;
+      transition: transform $duration-fast $ease-out;
+
+      &.rotate {
+        transform: rotate(180deg);
+      }
+    }
+
+    &:hover {
+      background: $sand;
+      color: $ink;
+    }
+  }
+
+  &__preset-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    background: $white;
+    border: 1px solid $sand;
+    border-radius: $radius-md;
+    box-shadow: $shadow-lg;
+    z-index: 100;
+    min-width: 140px;
+    padding: $space-1;
+    animation: fadeIn $duration-fast $ease-out;
+  }
+
+  &__preset-item {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    width: 100%;
+    padding: $space-2 $space-3;
+    background: transparent;
+    border: none;
+    border-radius: $radius-sm;
+    font-size: 0.75rem;
+    font-weight: 500;
+    font-family: $font-body;
+    color: $ink-muted;
+    cursor: pointer;
+    transition: all $duration-fast $ease-out;
+    text-align: left;
 
     svg {
       width: 14px;
       height: 14px;
     }
-  }
-}
-
-// Section Options
-.section-options {
-  background-color: $bg-tertiary;
-  border-radius: $radius-lg;
-  padding: $spacing-md;
-
-  &__title {
-    font-size: 0.7rem;
-    color: $text-tertiary;
-    margin-bottom: $spacing-sm;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    font-weight: 600;
-  }
-
-  &__grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: $spacing-xs;
-  }
-
-  &__pill {
-    display: flex;
-    align-items: center;
-    gap: $spacing-xs;
-    padding: $spacing-xs + 2px $spacing-sm + 4px;
-    background-color: $bg-secondary;
-    border: none;
-    border-radius: $radius-full;
-    cursor: pointer;
-    transition: all $transition-fast;
-    user-select: none;
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: $text-secondary;
-
-    svg {
-      width: 13px;
-      height: 13px;
-    }
 
     &:hover {
-      background-color: $bg-hover;
-      color: $text-primary;
+      background: $cream;
+      color: $ink;
+    }
+  }
+
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    background: $cream;
+    border-radius: $radius-md;
+    border: 2px solid transparent;
+    transition: all $duration-fast $ease-out;
+    user-select: none;
+
+    &:hover {
+      background: $sand;
+
+      .section-options__item-drag {
+        opacity: 1;
+      }
     }
 
     &--active {
-      background-color: $text-primary;
-      color: white;
+      background: $ink;
+
+      .section-options__item-toggle {
+        color: $white;
+      }
+
+      .section-options__item-drag {
+        color: rgba($white, 0.4);
+
+        &:hover {
+          color: rgba($white, 0.7);
+        }
+      }
 
       &:hover {
-        background-color: lighten($text-primary, 10%);
-        color: white;
+        background: $ink-soft;
+      }
+    }
+
+    &--dragging {
+      opacity: 0.5;
+      transform: scale(0.98);
+    }
+
+    &--drag-over {
+      border-color: $terracotta;
+      background: $terracotta-light;
+
+      &.section-options__item--active {
+        background: $ink;
+        border-color: $terracotta;
+      }
+    }
+
+    &-drag {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: $space-2 $space-2 $space-2 $space-3;
+      color: $stone;
+      cursor: grab;
+      opacity: 0.5;
+      transition: all $duration-fast $ease-out;
+
+      &:hover {
+        color: $ink-muted;
+        opacity: 1;
+      }
+
+      &:active {
+        cursor: grabbing;
+      }
+
+      svg {
+        width: 14px;
+        height: 14px;
+      }
+    }
+
+    &-toggle {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: $space-2;
+      padding: $space-2 + 2px $space-3 $space-2 + 2px 0;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: $font-body;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: $ink-muted;
+      text-align: left;
+      transition: color $duration-fast $ease-out;
+
+      svg {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+      }
+
+      span {
+        flex: 1;
       }
     }
   }
 }
 
-// Readme Output
+// ═══════════════════════════════════════════════════════════════
+// README OUTPUT
+// ═══════════════════════════════════════════════════════════════
+
 .readme-output {
-  background-color: $bg-secondary;
-  overflow: hidden;
-  animation: fadeIn 0.3s ease;
   width: 100%;
   height: 100vh;
   display: flex;
   flex-direction: column;
+  animation: fadeIn $duration-normal $ease-out;
+  position: relative;
+  z-index: 1;
 
   &__header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: $spacing-sm $spacing-md;
-    background-color: $bg-tertiary;
-    border-bottom: 1px solid $border-color;
+    padding: $space-4 $space-5;
+    background: $white;
+    border-bottom: 1px solid $sand;
     flex-wrap: wrap;
-    gap: $spacing-sm;
+    gap: $space-3;
+    position: sticky;
+    top: 0;
+    z-index: 10;
   }
 
   &__tabs {
     display: flex;
-    gap: 2px;
-    background-color: $bg-secondary;
-    padding: 2px;
-    border-radius: $radius-sm;
+    gap: $space-1;
+    background: $cream;
+    padding: $space-1;
+    border-radius: $radius-md;
   }
 
   &__tab {
     display: flex;
     align-items: center;
-    gap: $spacing-xs;
-    padding: $spacing-xs $spacing-sm + 2px;
-    background-color: transparent;
+    gap: $space-2;
+    padding: $space-2 $space-3;
+    background: transparent;
     border: none;
-    border-radius: $radius-sm - 2px;
-    color: $text-secondary;
-    font-size: 0.75rem;
-    font-weight: 500;
-    font-family: $font-sans;
+    border-radius: $radius-sm + 2px;
+    color: $stone;
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: $font-body;
     cursor: pointer;
-    transition: all $transition-fast;
+    transition: all $duration-fast $ease-out;
 
     svg {
-      width: 12px;
-      height: 12px;
+      width: 14px;
+      height: 14px;
     }
 
     &:hover {
-      color: $text-primary;
+      color: $ink-soft;
     }
 
     &--active {
-      background-color: $bg-tertiary;
-      color: $text-primary;
+      background: $white;
+      color: $ink;
+      box-shadow: $shadow-sm;
     }
   }
 
   &__actions {
     display: flex;
-    gap: $spacing-xs;
+    gap: $space-2;
     flex-wrap: wrap;
   }
 
   &__btn {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: $spacing-xs;
-    padding: $spacing-xs $spacing-sm;
-    background-color: transparent;
-    border: none;
-    border-radius: $radius-sm;
-    color: $text-secondary;
-    font-size: 0.75rem;
-    font-weight: 500;
-    font-family: $font-sans;
+    gap: $space-2;
+    padding: $space-2 $space-3;
+    background: transparent;
+    border: 1px solid $sand;
+    border-radius: $radius-md;
+    color: $ink-muted;
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: $font-body;
     cursor: pointer;
-    transition: all $transition-fast;
+    transition: all $duration-fast $ease-out;
 
     svg {
-      width: 12px;
-      height: 12px;
+      width: 14px;
+      height: 14px;
     }
 
     &:hover:not(:disabled) {
-      background-color: $bg-secondary;
-      color: $text-primary;
+      background: $cream;
+      border-color: $stone;
+      color: $ink;
     }
 
     &:active:not(:disabled) {
-      transform: scale(0.96);
+      transform: scale(0.97);
     }
 
     &:disabled {
-      opacity: 0.5;
+      opacity: 0.4;
       cursor: not-allowed;
     }
 
     &--success {
       color: $success;
-      background-color: $green-light;
+      background: $forest-light;
+      border-color: transparent;
     }
 
     &--download {
-      color: $orange;
+      color: $ochre;
+      border-color: rgba($ochre, 0.3);
 
       &:hover:not(:disabled) {
-        background-color: $orange-light;
-        color: $orange-hover;
+        background: $ochre-light;
+        border-color: rgba($ochre, 0.5);
+        color: darken($ochre, 10%);
       }
     }
 
     &--primary {
-      background-color: $green;
-      color: white;
+      background: linear-gradient(
+        135deg,
+        $terracotta 0%,
+        $terracotta-deep 100%
+      );
+      color: $white;
+      border: none;
+      box-shadow: $shadow-sm;
 
       &:hover:not(:disabled) {
-        background-color: $green-hover;
-        color: white;
+        transform: translateY(-1px);
+        box-shadow: $shadow-md;
       }
     }
   }
 
   &__error {
-    padding: $spacing-sm $spacing-md;
-    background-color: rgba($error, 0.08);
-    color: $error;
-    font-size: 0.8rem;
+    padding: $space-3 $space-5;
+    background: $terracotta-light;
+    color: $terracotta-deep;
+    font-size: 0.85rem;
     font-weight: 500;
   }
 
   &__success {
-    padding: $spacing-sm $spacing-md;
-    background-color: $green-light;
-    color: $green;
-    font-size: 0.8rem;
+    padding: $space-3 $space-5;
+    background: $forest-light;
+    color: $forest;
+    font-size: 0.85rem;
     font-weight: 500;
 
     a {
       color: inherit;
-      font-weight: 600;
+      font-weight: 700;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+
+      &:hover {
+        text-decoration-thickness: 2px;
+      }
     }
   }
 
   &__content {
     flex: 1;
     overflow-y: auto;
-    background-color: $bg-tertiary;
+    background: $white;
 
     textarea {
       width: 100%;
       height: 100%;
-      min-height: 400px;
-      padding: $spacing-md;
-      background-color: #1e1e2e;
+      min-height: 500px;
+      padding: $space-6;
+      background: #1c1917;
       border: none;
-      color: #cdd6f4;
+      color: #e7e5e4;
       font-family: $font-mono;
-      font-size: 0.8rem;
-      line-height: 1.55;
+      font-size: 0.85rem;
+      line-height: 1.7;
       resize: none;
       outline: none;
 
       &::selection {
-        background-color: rgba($purple, 0.4);
+        background: rgba($terracotta, 0.4);
       }
     }
   }
 }
 
-// Readme Placeholder
+// ═══════════════════════════════════════════════════════════════
+// README PLACEHOLDER
+// ═══════════════════════════════════════════════════════════════
+
 .readme-placeholder {
-  background-color: $bg-secondary;
-  border-radius: $radius-lg;
-  overflow: hidden;
   width: 100%;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  opacity: 0.6;
-  transition: opacity $transition-normal;
+  opacity: 0.5;
+  transition: opacity $duration-normal $ease-out;
+  position: relative;
+  z-index: 1;
 
   &--loading {
     opacity: 1;
 
     .skeleton-line,
-    .skeleton-badge,
-    .skeleton-code {
-      animation: shimmer 1.5s infinite;
+    .skeleton-badge {
+      animation: shimmer 2s infinite;
     }
   }
 
@@ -496,91 +1290,88 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: $spacing-sm $spacing-md;
-    background-color: $bg-tertiary;
-    border-bottom: 1px solid $border-color;
+    padding: $space-4 $space-5;
+    background: $white;
+    border-bottom: 1px solid $sand;
     flex-wrap: wrap;
-    gap: $spacing-sm;
+    gap: $space-3;
   }
 
   &__tabs {
     display: flex;
-    gap: 2px;
-    background-color: $bg-secondary;
-    padding: 2px;
-    border-radius: $radius-sm;
+    gap: $space-1;
+    background: $cream;
+    padding: $space-1;
+    border-radius: $radius-md;
   }
 
   &__tab {
     display: flex;
     align-items: center;
-    gap: $spacing-xs;
-    padding: $spacing-xs $spacing-sm + 2px;
-    background-color: transparent;
+    gap: $space-2;
+    padding: $space-2 $space-3;
+    background: transparent;
     border: none;
-    border-radius: $radius-sm - 2px;
-    color: $text-tertiary;
-    font-size: 0.75rem;
-    font-weight: 500;
-    font-family: $font-sans;
-    cursor: default;
+    border-radius: $radius-sm + 2px;
+    color: $stone;
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: $font-body;
 
     svg {
-      width: 12px;
-      height: 12px;
+      width: 14px;
+      height: 14px;
     }
 
     &--active {
-      background-color: $bg-tertiary;
-      color: $text-secondary;
+      background: $white;
+      color: $ink-muted;
+      box-shadow: $shadow-sm;
     }
   }
 
   &__actions {
     display: flex;
-    gap: $spacing-xs;
+    gap: $space-2;
     flex-wrap: wrap;
   }
 
   &__btn {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: $spacing-xs;
-    padding: $spacing-xs $spacing-sm;
-    background-color: transparent;
-    border: none;
-    border-radius: $radius-sm;
-    color: $text-tertiary;
-    font-size: 0.75rem;
-    font-weight: 500;
-    font-family: $font-sans;
-    cursor: default;
+    gap: $space-2;
+    padding: $space-2 $space-3;
+    background: transparent;
+    border: 1px solid $sand;
+    border-radius: $radius-md;
+    color: $stone;
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: $font-body;
 
     svg {
-      width: 12px;
-      height: 12px;
+      width: 14px;
+      height: 14px;
     }
 
     &--primary {
-      background-color: $bg-hover;
-      color: $text-tertiary;
+      background: $cream;
+      border-color: transparent;
     }
   }
 
   &__content {
     flex: 1;
     overflow-y: auto;
-    background-color: $bg-tertiary;
+    background: $white;
     position: relative;
-    height: 100%;
-    // min-height: 400px;
   }
 
   &__skeleton {
-    padding: $spacing-lg;
+    padding: $space-6;
     display: flex;
     flex-direction: column;
-    gap: $spacing-sm;
+    gap: $space-3;
   }
 
   &__message {
@@ -589,38 +1380,34 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba($bg-tertiary, 0.8);
-    color: $text-secondary;
-    font-size: 0.9rem;
+    background: rgba($white, 0.9);
+    color: $ink-muted;
+    font-size: 0.95rem;
     font-weight: 500;
     text-align: center;
-    padding: $spacing-lg;
+    padding: $space-6;
   }
 }
 
-// Skeleton elements
+// Skeleton Elements
 .skeleton-line {
-  height: 12px;
-  background: linear-gradient(
-    90deg,
-    $bg-secondary 0%,
-    $bg-hover 50%,
-    $bg-secondary 100%
-  );
+  height: 14px;
+  background: linear-gradient(90deg, $cream 0%, $sand 50%, $cream 100%);
   background-size: 200% 100%;
-  border-radius: 4px;
+  border-radius: $radius-sm;
 
   &--title {
-    width: 60%;
-    height: 24px;
-    margin-bottom: $spacing-sm;
+    width: 55%;
+    height: 32px;
+    margin-bottom: $space-3;
+    border-radius: $radius-md;
   }
 
   &--heading {
-    width: 40%;
-    height: 16px;
-    margin-top: $spacing-md;
-    margin-bottom: $spacing-xs;
+    width: 35%;
+    height: 20px;
+    margin-top: $space-5;
+    margin-bottom: $space-2;
   }
 
   &--full {
@@ -628,77 +1415,44 @@ body {
   }
 
   &--medium {
-    width: 75%;
+    width: 70%;
   }
 
   &--short {
-    width: 50%;
+    width: 45%;
   }
 
   &--list {
-    width: 85%;
-    margin-left: $spacing-md;
-  }
-
-  &--code {
-    width: 70%;
-    background: linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.05) 0%,
-      rgba(255, 255, 255, 0.1) 50%,
-      rgba(255, 255, 255, 0.05) 100%
-    );
-    background-size: 200% 100%;
-  }
-
-  &--code-short {
-    width: 45%;
-    background: linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.05) 0%,
-      rgba(255, 255, 255, 0.1) 50%,
-      rgba(255, 255, 255, 0.05) 100%
-    );
-    background-size: 200% 100%;
+    width: 80%;
+    margin-left: $space-5;
   }
 }
 
 .skeleton-badges {
   display: flex;
-  gap: $spacing-sm;
-  margin-bottom: $spacing-md;
+  gap: $space-3;
+  margin-bottom: $space-5;
 }
 
 .skeleton-badge {
-  width: 70px;
-  height: 20px;
-  background: linear-gradient(
-    90deg,
-    $bg-secondary 0%,
-    $bg-hover 50%,
-    $bg-secondary 100%
-  );
+  width: 80px;
+  height: 24px;
+  background: linear-gradient(90deg, $cream 0%, $sand 50%, $cream 100%);
   background-size: 200% 100%;
-  border-radius: 4px;
+  border-radius: 100px;
 }
 
-.skeleton-code {
-  background-color: #1e1e2e;
-  border-radius: $radius-md;
-  padding: $spacing-md;
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-sm;
-  margin: $spacing-sm 0;
-}
+// ═══════════════════════════════════════════════════════════════
+// MARKDOWN PREVIEW
+// ═══════════════════════════════════════════════════════════════
 
-// Markdown Preview
 .markdown-preview {
-  padding: $spacing-lg;
-  font-size: 0.9rem;
-  line-height: 1.6;
-  color: $text-primary;
-  min-height: 400px;
+  padding: $space-6 $space-7;
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: $ink;
+  min-height: 500px;
+  max-width: 800px;
 
   > *:first-child {
     margin-top: 0;
@@ -714,60 +1468,72 @@ body {
   h4,
   h5,
   h6 {
-    margin-top: 1.5em;
-    margin-bottom: 0.5em;
+    font-family: $font-display;
+    margin-top: 2em;
+    margin-bottom: 0.6em;
     font-weight: 600;
-    line-height: 1.25;
-    color: $text-primary;
+    line-height: 1.3;
+    color: $ink;
+    letter-spacing: -0.01em;
   }
 
   h1 {
-    font-size: 1.75em;
-    padding-bottom: 0.3em;
-    border-bottom: 1px solid $border-color;
+    font-size: 2em;
+    padding-bottom: 0.4em;
+    border-bottom: 2px solid $sand;
+    margin-top: 0;
   }
 
   h2 {
-    font-size: 1.4em;
-    padding-bottom: 0.25em;
-    border-bottom: 1px solid $border-color;
+    font-size: 1.5em;
+    padding-bottom: 0.3em;
+    border-bottom: 1px solid $sand;
   }
 
   h3 {
-    font-size: 1.15em;
+    font-size: 1.2em;
+    font-family: $font-body;
+    font-weight: 700;
   }
 
   h4 {
     font-size: 1em;
+    font-family: $font-body;
+    font-weight: 700;
   }
 
   p {
     margin-top: 0;
-    margin-bottom: 1em;
+    margin-bottom: 1.2em;
   }
 
   a {
-    color: $accent;
-    text-decoration: none;
+    color: $terracotta;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+    transition: all $duration-fast $ease-out;
 
     &:hover {
-      text-decoration: underline;
+      color: $terracotta-deep;
+      text-decoration-thickness: 2px;
     }
   }
 
   strong {
-    font-weight: 600;
+    font-weight: 700;
+    color: $ink;
   }
 
   ul,
   ol {
     margin-top: 0;
-    margin-bottom: 1em;
-    padding-left: 2em;
+    margin-bottom: 1.2em;
+    padding-left: 1.5em;
   }
 
   li {
-    margin-bottom: 0.25em;
+    margin-bottom: 0.4em;
 
     > p {
       margin-bottom: 0.5em;
@@ -785,33 +1551,38 @@ body {
   code {
     font-family: $font-mono;
     font-size: 0.85em;
-    background-color: $bg-secondary;
-    padding: 0.2em 0.4em;
-    border-radius: 4px;
+    background: $cream;
+    padding: 0.25em 0.5em;
+    border-radius: $radius-sm;
+    color: $terracotta-deep;
   }
 
   pre {
     margin-top: 0;
-    margin-bottom: 1em;
-    padding: $spacing-md;
-    background-color: #1e1e2e;
-    border-radius: $radius-md;
+    margin-bottom: 1.5em;
+    padding: $space-5;
+    background: #1c1917;
+    border-radius: $radius-lg;
     overflow-x: auto;
+    box-shadow: $shadow-lg;
 
     code {
-      background-color: transparent;
+      background: transparent;
       padding: 0;
-      font-size: 0.8rem;
-      color: #cdd6f4;
-      line-height: 1.5;
+      font-size: 0.85rem;
+      color: #e7e5e4;
+      line-height: 1.6;
     }
   }
 
   blockquote {
-    margin: 0 0 1em 0;
-    padding: 0 1em;
-    color: $text-secondary;
-    border-left: 3px solid $purple;
+    margin: 0 0 1.5em 0;
+    padding: $space-4 $space-5;
+    background: $cream;
+    border-left: 4px solid $terracotta;
+    border-radius: 0 $radius-md $radius-md 0;
+    color: $ink-soft;
+    font-style: italic;
 
     > *:last-child {
       margin-bottom: 0;
@@ -819,193 +1590,216 @@ body {
   }
 
   hr {
-    height: 1px;
-    margin: 1.5em 0;
-    background-color: $border-color;
+    height: 2px;
+    margin: 2.5em 0;
+    background: $sand;
     border: none;
+    border-radius: 1px;
   }
 
   table {
     width: 100%;
-    margin-bottom: 1em;
+    margin-bottom: 1.5em;
     border-collapse: collapse;
-    font-size: 0.85em;
+    font-size: 0.9em;
+    border-radius: $radius-md;
+    overflow: hidden;
+    box-shadow: $shadow-sm;
 
     th,
     td {
-      padding: $spacing-sm $spacing-md;
-      border: 1px solid $border-color;
+      padding: $space-3 $space-4;
+      border: 1px solid $sand;
       text-align: left;
     }
 
     th {
-      font-weight: 600;
-      background-color: $bg-secondary;
+      font-weight: 700;
+      background: $cream;
+      color: $ink;
     }
 
     tr:nth-child(even) {
-      background-color: rgba(0, 0, 0, 0.02);
+      background: rgba($cream, 0.5);
     }
   }
 
   img {
     max-width: 100%;
     height: auto;
-    border-radius: $radius-sm;
+    border-radius: $radius-md;
+    box-shadow: $shadow-md;
   }
 
   input[type="checkbox"] {
-    margin-right: $spacing-xs;
+    margin-right: $space-2;
+    accent-color: $terracotta;
   }
 }
 
-// Modal
+// ═══════════════════════════════════════════════════════════════
+// MODAL
+// ═══════════════════════════════════════════════════════════════
+
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background: rgba($ink, 0.6);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: $spacing-md;
+  padding: $space-5;
   z-index: 1000;
-  animation: fadeIn 0.2s ease;
+  animation: fadeIn $duration-fast $ease-out;
 }
 
 .modal {
-  background-color: $bg-tertiary;
-  border-radius: $radius-lg;
-  padding: $spacing-xl;
-  max-width: 400px;
+  background: $white;
+  border-radius: $radius-xl;
+  padding: $space-7;
+  max-width: 420px;
   width: 100%;
   position: relative;
-  animation: slideUp 0.3s ease;
+  animation: slideUp $duration-normal $ease-out;
+  box-shadow: $shadow-xl;
 
   &__close {
     position: absolute;
-    top: $spacing-md;
-    right: $spacing-md;
-    background: none;
+    top: $space-4;
+    right: $space-4;
+    background: transparent;
     border: none;
-    color: $text-tertiary;
+    color: $stone;
     cursor: pointer;
-    padding: $spacing-xs;
+    padding: $space-2;
     display: flex;
-    border-radius: $radius-sm;
-    transition: all $transition-fast;
+    border-radius: $radius-md;
+    transition: all $duration-fast $ease-out;
 
     svg {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
     }
 
     &:hover {
-      background-color: $bg-secondary;
-      color: $text-primary;
+      background: $cream;
+      color: $ink;
     }
   }
 
   &__icon {
-    width: 48px;
-    height: 48px;
-    background-color: $purple-light;
-    color: $purple;
-    border-radius: $radius-md;
+    width: 56px;
+    height: 56px;
+    background: $terracotta-light;
+    color: $terracotta;
+    border-radius: $radius-lg;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: $spacing-md;
+    margin-bottom: $space-5;
 
     svg {
-      width: 24px;
-      height: 24px;
+      width: 28px;
+      height: 28px;
     }
   }
 
   &__title {
-    font-size: 1.1rem;
+    font-family: $font-display;
+    font-size: 1.4rem;
     font-weight: 600;
-    margin-bottom: $spacing-xs;
-    color: $text-primary;
+    margin-bottom: $space-2;
+    color: $ink;
   }
 
   &__description {
-    font-size: 0.9rem;
-    color: $text-secondary;
-    margin-bottom: $spacing-md;
-    line-height: 1.5;
+    font-size: 0.95rem;
+    color: $ink-muted;
+    margin-bottom: $space-5;
+    line-height: 1.6;
 
     code {
-      background-color: $bg-secondary;
-      padding: 2px 6px;
-      border-radius: 4px;
+      background: $cream;
+      padding: 3px 8px;
+      border-radius: $radius-sm;
       font-family: $font-mono;
       font-size: 0.85em;
+      color: $terracotta-deep;
     }
   }
 
   &__link {
     display: inline-flex;
     align-items: center;
-    gap: $spacing-xs;
-    color: $purple;
-    font-size: 0.85rem;
-    font-weight: 500;
+    gap: $space-2;
+    color: $terracotta;
+    font-size: 0.9rem;
+    font-weight: 600;
     text-decoration: none;
-    margin-bottom: $spacing-md;
+    margin-bottom: $space-5;
+    transition: all $duration-fast $ease-out;
 
     svg {
-      width: 14px;
-      height: 14px;
+      width: 16px;
+      height: 16px;
     }
 
     &:hover {
+      color: $terracotta-deep;
       text-decoration: underline;
+      text-underline-offset: 3px;
     }
   }
 
   &__form {
     display: flex;
     flex-direction: column;
-    gap: $spacing-sm;
+    gap: $space-3;
 
     input {
       width: 100%;
-      padding: $spacing-sm + 2px $spacing-md;
-      background-color: $bg-secondary;
-      border: 1px solid transparent;
+      padding: $space-4;
+      background: $cream;
+      border: 2px solid transparent;
       border-radius: $radius-md;
-      color: $text-primary;
-      font-size: 0.9rem;
+      color: $ink;
+      font-size: 0.95rem;
       font-family: $font-mono;
-      transition: all $transition-fast;
+      transition: all $duration-fast $ease-out;
 
       &::placeholder {
-        color: $text-tertiary;
-        font-family: $font-mono;
+        color: $stone;
       }
 
       &:focus {
         outline: none;
-        border-color: $purple;
-        background-color: $bg-tertiary;
+        border-color: $terracotta;
+        background: $white;
+        box-shadow: 0 0 0 4px $terracotta-light;
       }
     }
 
     button {
-      padding: $spacing-sm + 2px $spacing-md;
-      background-color: $purple;
-      color: white;
+      padding: $space-4;
+      background: linear-gradient(
+        135deg,
+        $terracotta 0%,
+        $terracotta-deep 100%
+      );
+      color: $white;
       border: none;
       border-radius: $radius-md;
-      font-size: 0.9rem;
-      font-weight: 500;
-      font-family: $font-sans;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: $font-body;
       cursor: pointer;
-      transition: all $transition-fast;
+      transition: all $duration-fast $ease-out;
+      box-shadow: $shadow-sm;
 
       &:hover:not(:disabled) {
-        background-color: $purple-hover;
+        transform: translateY(-1px);
+        box-shadow: $shadow-md;
       }
 
       &:disabled {
@@ -1016,17 +1810,21 @@ body {
   }
 
   &__note {
-    margin-top: $spacing-md;
-    font-size: 0.75rem;
-    color: $text-tertiary;
+    margin-top: $space-5;
+    font-size: 0.8rem;
+    color: $stone;
     text-align: center;
+    line-height: 1.5;
   }
 }
 
-// Scrollbar
+// ═══════════════════════════════════════════════════════════════
+// SCROLLBAR
+// ═══════════════════════════════════════════════════════════════
+
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -1034,11 +1832,11 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.12);
+  background: $sand;
   border-radius: 100px;
 
   &:hover {
-    background: rgba(0, 0, 0, 0.2);
+    background: $stone;
   }
 }
 
@@ -1052,7 +1850,10 @@ body {
   }
 }
 
-// Animations
+// ═══════════════════════════════════════════════════════════════
+// ANIMATIONS
+// ═══════════════════════════════════════════════════════════════
+
 @keyframes spin {
   from {
     transform: rotate(0deg);
@@ -1074,7 +1875,7 @@ body {
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(16px);
   }
   to {
     opacity: 1;
@@ -1096,5 +1897,527 @@ body {
 }
 
 ::selection {
-  background-color: $purple-light;
+  background: $terracotta-light;
+  color: $ink;
+}
+// ═══════════════════════════════════════════════════════════════
+// ENHANCED MOBILE RESPONSIVENESS
+// ═══════════════════════════════════════════════════════════════
+
+@media (max-width: 900px) {
+  // General app adjustments
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+    min-height: 100vh;
+    height: auto;
+    overflow-y: auto;
+
+    &__left {
+      height: auto;
+      max-height: none;
+      min-height: 0;
+    }
+
+    &__scrollable {
+      padding: $space-4;
+    }
+  }
+
+  // Header adjustments
+  .app__header {
+    flex-wrap: wrap;
+
+    &-text {
+      flex: 1;
+      min-width: 200px;
+
+      h1 {
+        font-size: 1.1rem;
+      }
+
+      p {
+        font-size: 0.75rem;
+      }
+    }
+  }
+
+  // Repo input improvements
+  .repo-input {
+    padding: $space-4;
+
+    &__form {
+      gap: $space-2;
+    }
+
+    &__field input {
+      font-size: 0.9rem;
+      padding: $space-3 $space-3 $space-3 $space-7;
+    }
+  }
+
+  // Tone selector mobile improvements
+  .tone-selector {
+    &__options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: $space-2;
+    }
+
+    &__option {
+      align-items: flex-start;
+      padding: $space-3;
+      gap: $space-2;
+      height: auto;
+
+      &-icon {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+
+        svg {
+          width: 16px;
+          height: 16px;
+        }
+      }
+
+      &-desc {
+        display: block;
+        font-size: 0.7rem;
+        color: $ink-muted;
+        line-height: 1.4;
+        margin-top: $space-1;
+      }
+    }
+  }
+
+  // Badge style picker mobile improvements
+  .badge-style-picker {
+    &__options {
+      grid-template-columns: repeat(4, 1fr);
+      gap: $space-2;
+    }
+
+    &__option {
+      padding: $space-2;
+      gap: $space-2;
+
+      &--active {
+        border-width: 2px;
+      }
+    }
+
+    &__preview {
+      font-size: 6px;
+
+      &--for-the-badge {
+        font-size: 5px;
+      }
+    }
+
+    &__label {
+      font-size: 0.6rem;
+      text-align: center;
+    }
+  }
+
+  // Section options mobile improvements
+  .section-options {
+    padding: $space-3;
+
+    &__header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: $space-2;
+      margin-bottom: $space-3;
+    }
+
+    &__title {
+      font-size: 0.8rem;
+    }
+
+    &__actions {
+      justify-content: space-between;
+    }
+
+    &__hint {
+      display: none;
+    }
+
+    &__list {
+      max-height: 250px;
+    }
+
+    &__item {
+      &-toggle {
+        padding: $space-2;
+        font-size: 0.75rem;
+
+        svg {
+          width: 12px;
+          height: 12px;
+        }
+      }
+
+      &-drag {
+        padding: $space-2;
+      }
+    }
+  }
+
+  // Options grid adjustments
+  .app__options-grid {
+    grid-template-columns: 1fr;
+    gap: $space-2;
+  }
+
+  // Emoji and TOC toggle improvements
+  .emoji-toggle,
+  .toc-toggle {
+    flex-direction: row;
+    align-items: center;
+
+    &__text {
+      flex: 1;
+    }
+
+    &__label {
+      font-size: 0.8rem;
+    }
+
+    &__desc {
+      display: block;
+      font-size: 0.7rem;
+      color: $ink-muted;
+      margin-top: 2px;
+    }
+  }
+
+  // Readme output mobile improvements
+  .readme-output,
+  .readme-placeholder {
+    height: auto;
+    min-height: 500px;
+
+    &__header {
+      padding: $space-3 $space-4;
+      position: relative;
+      flex-direction: column;
+      align-items: stretch;
+      gap: $space-3;
+    }
+
+    &__tabs {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    &__tab {
+      flex: 1;
+      justify-content: center;
+      padding: $space-2;
+      font-size: 0.75rem;
+
+      span {
+        display: none;
+      }
+    }
+
+    &__actions {
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    &__btn {
+      flex: 1;
+      justify-content: center;
+      padding: $space-2;
+      font-size: 0.75rem;
+
+      span {
+        display: none;
+      }
+
+      &:not(:last-child) {
+        margin-right: 0;
+      }
+    }
+
+    &__content {
+      min-height: 400px;
+    }
+  }
+
+  .markdown-preview {
+    padding: $space-4 $space-5;
+    font-size: 0.85rem;
+
+    h1 {
+      font-size: 1.5em;
+    }
+
+    h2 {
+      font-size: 1.25em;
+    }
+
+    h3 {
+      font-size: 1.1em;
+    }
+
+    pre {
+      padding: $space-3;
+
+      code {
+        font-size: 0.8rem;
+      }
+    }
+
+    table {
+      font-size: 0.8em;
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+  }
+
+  // Modal mobile improvements
+  .modal {
+    padding: $space-5;
+    margin: $space-3;
+    max-width: calc(100vw - #{$space-6});
+
+    &__icon {
+      width: 48px;
+      height: 48px;
+      margin-bottom: $space-4;
+
+      svg {
+        width: 24px;
+        height: 24px;
+      }
+    }
+
+    &__title {
+      font-size: 1.2rem;
+    }
+
+    &__description {
+      font-size: 0.85rem;
+    }
+
+    &__form {
+      input,
+      button {
+        padding: $space-3;
+      }
+    }
+  }
+
+  // Readme placeholder skeleton improvements
+  .readme-placeholder__skeleton {
+    padding: $space-4;
+  }
+}
+
+// Extra small devices (phones, less than 600px)
+@media (max-width: 600px) {
+  .app {
+    &__sticky {
+      padding: $space-4;
+    }
+
+    &__logo {
+      width: 36px;
+      height: 36px;
+      min-width: 36px;
+
+      svg {
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+
+  .repo-input {
+    border-radius: $radius-lg;
+  }
+
+  .tone-selector {
+    &__options {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .badge-style-picker {
+    &__options {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .section-options {
+    &__preset-trigger {
+      font-size: 0.65rem;
+      padding: 6px 8px;
+
+      span {
+        display: none;
+      }
+
+      svg {
+        margin: 0;
+      }
+    }
+
+    &__preset-item {
+      font-size: 0.7rem;
+      padding: 6px 8px;
+    }
+  }
+
+  .readme-output,
+  .readme-placeholder {
+    &__tab,
+    &__btn {
+      padding: 6px 8px;
+
+      svg {
+        margin-right: 0;
+      }
+    }
+  }
+
+  .markdown-preview {
+    padding: $space-3 $space-4;
+
+    pre {
+      padding: $space-3;
+      border-radius: $radius-md;
+    }
+  }
+}
+
+// Very small devices (phones, less than 400px)
+@media (max-width: 400px) {
+  .app {
+    &__header-top {
+      flex-wrap: wrap;
+      gap: $space-2;
+    }
+
+    &__rate-limit {
+      order: 3;
+      width: 100%;
+      margin-top: $space-2;
+    }
+  }
+
+  .badge-style-picker {
+    &__options {
+      grid-template-columns: 1fr;
+    }
+
+    &__preview {
+      font-size: 7px;
+    }
+  }
+
+  .readme-output,
+  .readme-placeholder {
+    &__tabs {
+      flex-wrap: wrap;
+    }
+
+    &__tab {
+      flex: 0 0 calc(50% - 2px);
+      margin-bottom: $space-1;
+    }
+
+    &__actions {
+      flex-wrap: wrap;
+    }
+
+    &__btn {
+      flex: 0 0 calc(50% - 4px);
+      margin-bottom: $space-1;
+    }
+  }
+}
+
+// Landscape orientation improvements
+@media (max-height: 600px) and (orientation: landscape) {
+  .app {
+    grid-template-rows: auto 1fr;
+
+    &__left {
+      max-height: 70vh;
+    }
+
+    &__scrollable {
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+  }
+
+  .readme-output,
+  .readme-placeholder {
+    min-height: 300px;
+
+    &__content {
+      min-height: 300px;
+    }
+  }
+}
+
+// Touch device improvements
+@media (hover: none) and (pointer: coarse) {
+  .repo-input,
+  .tone-selector,
+  .badge-style-picker,
+  .emoji-toggle,
+  .toc-toggle,
+  .section-options,
+  .readme-output__btn,
+  .modal__close {
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+
+  .section-options__item-drag {
+    opacity: 1;
+    padding: $space-3;
+  }
+
+  .readme-output__tab,
+  .readme-output__btn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .emoji-toggle__switch,
+  .toc-toggle__switch {
+    min-height: 44px;
+    min-width: 60px;
+
+    &-thumb {
+      width: 20px;
+      height: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+  }
+
+  .emoji-toggle__switch--on .emoji-toggle__switch-thumb,
+  .toc-toggle__switch--on .toc-toggle__switch-thumb {
+    transform: translate(40px, -50%);
+  }
+}
+
+// Prevent zoom on input for mobile
+@media (max-width: 900px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
 }
