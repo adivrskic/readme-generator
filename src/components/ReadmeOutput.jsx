@@ -9,13 +9,17 @@ import {
   Loader2,
   Pencil,
   Eye,
+  LogIn,
 } from "lucide-react";
-import GitHubTokenModal from "./GitHubTokenModal";
 
-const ReadmeOutput = ({ readme, repoInfo }) => {
+const ReadmeOutput = ({
+  readme,
+  repoInfo,
+  isAuthenticated,
+  onAuthRequired,
+}) => {
   const [content, setContent] = useState(readme);
   const [copied, setCopied] = useState(false);
-  const [showTokenModal, setShowTokenModal] = useState(false);
   const [creating, setCreating] = useState(false);
   const [prUrl, setPrUrl] = useState(null);
   const [error, setError] = useState("");
@@ -49,22 +53,12 @@ const ReadmeOutput = ({ readme, repoInfo }) => {
     URL.revokeObjectURL(url);
   };
 
-  const handleCreatePR = () => {
-    const token = localStorage.getItem("github_token");
-    if (!token) {
-      setShowTokenModal(true);
-    } else {
-      createPullRequest(token);
+  const handleCreatePR = async () => {
+    if (!isAuthenticated) {
+      onAuthRequired();
+      return;
     }
-  };
 
-  const handleSaveToken = (token) => {
-    localStorage.setItem("github_token", token);
-    setShowTokenModal(false);
-    createPullRequest(token);
-  };
-
-  const createPullRequest = async (token) => {
     if (!repoInfo) {
       setError("Repository info not available");
       return;
@@ -77,8 +71,8 @@ const ReadmeOutput = ({ readme, repoInfo }) => {
       const response = await fetch("/.netlify/functions/create-pr", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // Important: include cookies for auth
         body: JSON.stringify({
-          token,
           owner: repoInfo.owner,
           repo: repoInfo.name,
           content,
@@ -89,12 +83,10 @@ const ReadmeOutput = ({ readme, repoInfo }) => {
       const data = await response.json();
 
       if (!response.ok) {
-        if (response.status === 401) {
-          localStorage.removeItem("github_token");
-          setShowTokenModal(true);
-          throw new Error(
-            "Token expired or invalid. Please enter a new token."
-          );
+        // Handle session expiry
+        if (data.sessionExpired) {
+          onAuthRequired();
+          throw new Error("Session expired. Please sign in again.");
         }
         throw new Error(data.error || "Failed to create PR");
       }
@@ -108,103 +100,97 @@ const ReadmeOutput = ({ readme, repoInfo }) => {
   };
 
   return (
-    <>
-      <div className="readme-output">
-        <div className="readme-output__header">
-          <div className="readme-output__tabs">
-            <button
-              className={`readme-output__tab ${
-                mode === "edit" ? "readme-output__tab--active" : ""
-              }`}
-              onClick={() => setMode("edit")}
-            >
-              <Pencil /> Edit
-            </button>
-            <button
-              className={`readme-output__tab ${
-                mode === "preview" ? "readme-output__tab--active" : ""
-              }`}
-              onClick={() => setMode("preview")}
-            >
-              <Eye /> Preview
-            </button>
-          </div>
-          <div className="readme-output__actions">
-            <button
-              className={`readme-output__btn ${
-                copied ? "readme-output__btn--success" : ""
-              }`}
-              onClick={handleCopy}
-            >
-              {copied ? (
-                <>
-                  <Check /> Copied!
-                </>
-              ) : (
-                <>
-                  <Copy /> Copy
-                </>
-              )}
-            </button>
-            <button
-              className="readme-output__btn readme-output__btn--download"
-              onClick={handleDownload}
-            >
-              <Download /> Download
-            </button>
-            <button
-              className="readme-output__btn readme-output__btn--primary"
-              onClick={handleCreatePR}
-              disabled={creating}
-            >
-              {creating ? (
-                <>
-                  <Loader2 className="spin" /> Creating...
-                </>
-              ) : (
-                <>
-                  <GitPullRequest /> Create PR
-                </>
-              )}
-            </button>
-          </div>
+    <div className="readme-output">
+      <div className="readme-output__header">
+        <div className="readme-output__tabs">
+          <button
+            className={`readme-output__tab ${
+              mode === "edit" ? "readme-output__tab--active" : ""
+            }`}
+            onClick={() => setMode("edit")}
+          >
+            <Pencil /> Edit
+          </button>
+          <button
+            className={`readme-output__tab ${
+              mode === "preview" ? "readme-output__tab--active" : ""
+            }`}
+            onClick={() => setMode("preview")}
+          >
+            <Eye /> Preview
+          </button>
         </div>
-
-        {error && <div className="readme-output__error">{error}</div>}
-
-        {prUrl && (
-          <div className="readme-output__success">
-            PR created!{" "}
-            <a href={prUrl} target="_blank" rel="noopener noreferrer">
-              View on GitHub →
-            </a>
-          </div>
-        )}
-
-        <div className="readme-output__content">
-          {mode === "edit" ? (
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              spellCheck={false}
-            />
-          ) : (
-            <div className="markdown-preview">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {content}
-              </ReactMarkdown>
-            </div>
-          )}
+        <div className="readme-output__actions">
+          <button
+            className={`readme-output__btn ${
+              copied ? "readme-output__btn--success" : ""
+            }`}
+            onClick={handleCopy}
+          >
+            {copied ? (
+              <>
+                <Check /> Copied!
+              </>
+            ) : (
+              <>
+                <Copy /> Copy
+              </>
+            )}
+          </button>
+          <button
+            className="readme-output__btn readme-output__btn--download"
+            onClick={handleDownload}
+          >
+            <Download /> Download
+          </button>
+          <button
+            className="readme-output__btn readme-output__btn--primary"
+            onClick={handleCreatePR}
+            disabled={creating}
+            title={!isAuthenticated ? "Sign in with GitHub to create PRs" : ""}
+          >
+            {creating ? (
+              <>
+                <Loader2 className="spin" /> Creating...
+              </>
+            ) : !isAuthenticated ? (
+              <>
+                <LogIn /> Sign in to Create PR
+              </>
+            ) : (
+              <>
+                <GitPullRequest /> Create PR
+              </>
+            )}
+          </button>
         </div>
       </div>
 
-      {showTokenModal && (
-        <GitHubTokenModal
-          onClose={() => setShowTokenModal(false)}
-          onSave={handleSaveToken}
-        />
+      {error && <div className="readme-output__error">{error}</div>}
+
+      {prUrl && (
+        <div className="readme-output__success">
+          PR created!{" "}
+          <a href={prUrl} target="_blank" rel="noopener noreferrer">
+            View on GitHub →
+          </a>
+        </div>
       )}
-    </>
+
+      <div className="readme-output__content">
+        {mode === "edit" ? (
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            spellCheck={false}
+          />
+        ) : (
+          <div className="markdown-preview">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

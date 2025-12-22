@@ -8,6 +8,7 @@ import TocToggle from "./components/TocToggle";
 import EmojiToggle from "./components/EmojiToggle";
 import ReadmeOutput from "./components/ReadmeOutput";
 import ReadmePlaceholder from "./components/ReadmePlaceholder";
+import UserMenu from "./components/UserMenu";
 import { parseGitHubUrl, fetchRepoData, getRateLimit } from "./services/github";
 import { generateReadme } from "./services/readme";
 import "./styles/main.scss";
@@ -41,20 +42,13 @@ const DEFAULT_SECTIONS = [
 
 /**
  * Safely get item from localStorage
- * @param {string} key - Storage key
- * @param {any} defaultValue - Default value if not found or error
- * @returns {any} Stored value or default
  */
 const getStoredValue = (key, defaultValue) => {
   try {
     const stored = localStorage.getItem(key);
     if (stored === null) return defaultValue;
-
-    // Handle boolean strings
     if (stored === "true") return true;
     if (stored === "false") return false;
-
-    // Try to parse as JSON for objects/arrays
     try {
       return JSON.parse(stored);
     } catch {
@@ -68,8 +62,6 @@ const getStoredValue = (key, defaultValue) => {
 
 /**
  * Safely set item in localStorage
- * @param {string} key - Storage key
- * @param {any} value - Value to store
  */
 const setStoredValue = (key, value) => {
   try {
@@ -83,26 +75,46 @@ const setStoredValue = (key, value) => {
 
 /**
  * Merges stored sections with defaults to handle new sections added in updates
- * @param {Array} storedSections - Sections from localStorage
- * @param {Array} defaultSections - Default sections configuration
- * @returns {Array} Merged sections
  */
 const mergeSections = (storedSections, defaultSections) => {
   if (!Array.isArray(storedSections)) return defaultSections;
-
-  // Create a map of stored sections
   const storedMap = new Map(storedSections.map((s) => [s.id, s]));
-
-  // Merge: use stored values where available, add new defaults
-  const merged = defaultSections.map((defaultSection) => {
+  return defaultSections.map((defaultSection) => {
     const stored = storedMap.get(defaultSection.id);
     return stored || defaultSection;
   });
+};
 
-  return merged;
+/**
+ * Parses URL query parameters for OAuth errors
+ */
+const getUrlError = () => {
+  const params = new URLSearchParams(window.location.search);
+  const error = params.get("error");
+  if (error) {
+    // Clean up URL
+    window.history.replaceState({}, "", window.location.pathname);
+
+    const errorMessages = {
+      oauth_denied: "GitHub authorization was denied.",
+      no_code: "No authorization code received.",
+      invalid_state: "Invalid OAuth state. Please try again.",
+      config_error: "OAuth is not configured properly.",
+      token_exchange_failed: "Failed to authenticate with GitHub.",
+      user_fetch_failed: "Failed to fetch user information.",
+      unexpected: "An unexpected error occurred.",
+    };
+    return errorMessages[error] || "Authentication failed.";
+  }
+  return null;
 };
 
 const App = () => {
+  // Auth state
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState(() => getUrlError());
+
   // Initialize state from localStorage with defaults
   const [repoUrl, setRepoUrl] = useState(() =>
     getStoredValue(STORAGE_KEYS.LAST_REPO, "")
@@ -112,7 +124,7 @@ const App = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [stage, setStage] = useState("");
-  const [rateLimit, setRateLimit] = useState({ remaining: 6, reset: null });
+  const [rateLimit, setRateLimit] = useState({ remaining: 60, reset: null });
 
   // Persisted settings
   const [tone, setTone] = useState(() =>
@@ -130,6 +142,40 @@ const App = () => {
   const [sections, setSections] = useState(() =>
     mergeSections(getStoredValue(STORAGE_KEYS.SECTIONS, null), DEFAULT_SECTIONS)
   );
+
+  // Check auth status on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response = await fetch("/.netlify/functions/auth-status", {
+          credentials: "include",
+        });
+        const data = await response.json();
+
+        if (data.authenticated && data.user) {
+          setUser(data.user);
+          console.log("[App] User authenticated:", data.user.login);
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("[App] Auth check failed:", error);
+        setUser(null);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  // Clear auth error after display
+  useEffect(() => {
+    if (authError) {
+      const timer = setTimeout(() => setAuthError(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [authError]);
 
   // Persist settings to localStorage when they change
   useEffect(() => {
@@ -152,27 +198,32 @@ const App = () => {
     setStoredValue(STORAGE_KEYS.SECTIONS, sections);
   }, [sections]);
 
-  // Poll rate limit less aggressively (every 5 seconds instead of 1)
+  // Poll rate limit less aggressively
   useEffect(() => {
-    // Initial fetch
     setRateLimit(getRateLimit());
-
     const interval = setInterval(() => {
       setRateLimit(getRateLimit());
     }, 5000);
-
     return () => clearInterval(interval);
   }, []);
 
   const getRateLimitClass = useCallback(() => {
-    if (rateLimit.remaining <= 2) return "app__rate-limit--danger";
-    if (rateLimit.remaining <= 4) return "app__rate-limit--warning";
+    if (rateLimit.remaining <= 5) return "app__rate-limit--danger";
+    if (rateLimit.remaining <= 15) return "app__rate-limit--warning";
     return "";
   }, [rateLimit.remaining]);
 
   const getRateLimitPercent = useCallback(() => {
     return Math.max(0, Math.min(100, (rateLimit.remaining / 60) * 100));
   }, [rateLimit.remaining]);
+
+  const handleLogin = () => {
+    window.location.href = "/.netlify/functions/auth-login";
+  };
+
+  const handleLogout = () => {
+    window.location.href = "/.netlify/functions/auth-logout";
+  };
 
   const handleSubmit = async () => {
     const parsed = parseGitHubUrl(repoUrl);
@@ -184,9 +235,7 @@ const App = () => {
       return;
     }
 
-    // Save the repo URL for next time
     setStoredValue(STORAGE_KEYS.LAST_REPO, repoUrl);
-
     setError("");
     setLoading(true);
     setReadme("");
@@ -201,8 +250,6 @@ const App = () => {
     try {
       const repoData = await fetchRepoData(parsed.owner, parsed.repo, setStage);
       setRepoInfo(repoData);
-
-      // Update rate limit immediately after fetch
       setRateLimit(getRateLimit());
 
       setStage("Generating README...");
@@ -228,7 +275,7 @@ const App = () => {
     }
   };
 
-  // Handle keyboard shortcut (Cmd/Ctrl + Enter) to submit
+  // Handle keyboard shortcut
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (
@@ -259,23 +306,34 @@ const App = () => {
                 <p>Generate READMEs from GitHub repos</p>
               </div>
             </div>
-            <div
-              className={`app__rate-limit ${getRateLimitClass()}`}
-              title={`GitHub API: ${rateLimit.remaining} requests remaining${
-                rateLimit.reset
-                  ? ` (resets ${rateLimit.reset.toLocaleTimeString()})`
-                  : ""
-              }`}
-            >
-              <div className="app__rate-limit-dot" />
-              <div className="app__rate-limit-bar">
-                <div
-                  className="app__rate-limit-bar-fill"
-                  style={{ width: `${getRateLimitPercent()}%` }}
-                />
+            <div className="app__header-right">
+              <div
+                className={`app__rate-limit ${getRateLimitClass()}`}
+                title={`GitHub API: ${rateLimit.remaining} requests remaining${
+                  rateLimit.reset
+                    ? ` (resets ${rateLimit.reset.toLocaleTimeString()})`
+                    : ""
+                }`}
+              >
+                <div className="app__rate-limit-dot" />
+                <div className="app__rate-limit-bar">
+                  <div
+                    className="app__rate-limit-bar-fill"
+                    style={{ width: `${getRateLimitPercent()}%` }}
+                  />
+                </div>
               </div>
+              {!authLoading && (
+                <UserMenu
+                  user={user}
+                  onLogin={handleLogin}
+                  onLogout={handleLogout}
+                />
+              )}
             </div>
           </header>
+
+          {authError && <div className="app__auth-error">{authError}</div>}
 
           <RepoInput
             repoUrl={repoUrl}
@@ -304,7 +362,12 @@ const App = () => {
 
       <div className="app__right">
         {readme ? (
-          <ReadmeOutput readme={readme} repoInfo={repoInfo} />
+          <ReadmeOutput
+            readme={readme}
+            repoInfo={repoInfo}
+            isAuthenticated={!!user}
+            onAuthRequired={handleLogin}
+          />
         ) : (
           <ReadmePlaceholder loading={loading} />
         )}

@@ -2421,3 +2421,251 @@ body {
     font-size: 16px !important;
   }
 }
+// ═══════════════════════════════════════════════════════════════
+// USER MENU & AUTH STYLES
+// Add these to your main.scss file
+// ═══════════════════════════════════════════════════════════════
+
+// Update the app__header-right to hold both rate limit and user menu
+.app__header-right {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+}
+
+// Auth error banner
+.app__auth-error {
+  padding: $space-3 $space-4;
+  background: $terracotta-light;
+  border-radius: $radius-md;
+  color: $terracotta-deep;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: $space-3;
+  animation: fadeIn $duration-fast $ease-out;
+}
+
+// User Menu Component
+.user-menu {
+  position: relative;
+
+  &__login {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    padding: $space-2 $space-3;
+    background: $ink;
+    color: $white;
+    border: none;
+    border-radius: $radius-md;
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: $font-body;
+    cursor: pointer;
+    transition: all $duration-fast $ease-out;
+    white-space: nowrap;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    &:hover {
+      background: $ink-soft;
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  &__trigger {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    padding: $space-1 + 2px $space-2 + 2px;
+    background: $cream;
+    border: 1px solid $sand;
+    border-radius: $radius-md;
+    font-size: 0.8rem;
+    font-weight: 500;
+    font-family: $font-body;
+    color: $ink;
+    cursor: pointer;
+    transition: all $duration-fast $ease-out;
+
+    &:hover {
+      background: $sand;
+      border-color: $stone;
+    }
+  }
+
+  &__avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  &__avatar-placeholder {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: $sand;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $ink-muted;
+  }
+
+  &__name {
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    @media (max-width: 600px) {
+      display: none;
+    }
+  }
+
+  &__chevron {
+    color: $stone;
+    transition: transform $duration-fast $ease-out;
+
+    &.rotate {
+      transform: rotate(180deg);
+    }
+  }
+
+  &__dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: $white;
+    border: 1px solid $sand;
+    border-radius: $radius-lg;
+    box-shadow: $shadow-lg;
+    z-index: 100;
+    min-width: 200px;
+    padding: $space-2;
+    animation: fadeIn $duration-fast $ease-out;
+  }
+
+  &__user-info {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+    padding: $space-3;
+  }
+
+  &__dropdown-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  &__user-details {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  &__user-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: $ink;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__user-login {
+    font-size: 0.8rem;
+    color: $ink-muted;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__divider {
+    height: 1px;
+    background: $sand;
+    margin: $space-2 0;
+  }
+
+  &__item {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    width: 100%;
+    padding: $space-2 + 2px $space-3;
+    background: transparent;
+    border: none;
+    border-radius: $radius-md;
+    font-size: 0.85rem;
+    font-weight: 500;
+    font-family: $font-body;
+    color: $ink-muted;
+    cursor: pointer;
+    transition: all $duration-fast $ease-out;
+    text-align: left;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    &:hover {
+      background: $cream;
+      color: $terracotta;
+    }
+  }
+}
+
+// Mobile adjustments for auth
+@media (max-width: 900px) {
+  .app__header {
+    &-right {
+      gap: $space-2;
+    }
+  }
+
+  .user-menu {
+    &__login {
+      padding: $space-2;
+
+      span {
+        display: none;
+      }
+
+      svg {
+        margin: 0;
+      }
+    }
+
+    &__trigger {
+      padding: $space-1 + 2px;
+    }
+
+    &__dropdown {
+      right: -$space-2;
+      min-width: 180px;
+    }
+  }
+}
+
+@media (max-width: 400px) {
+  .user-menu__dropdown {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: $radius-xl $radius-xl 0 0;
+    padding: $space-4;
+    min-width: 100%;
+  }
+}

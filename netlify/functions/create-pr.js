@@ -1,7 +1,12 @@
 /**
  * Netlify Function: create-pr
  * Creates a GitHub Pull Request with the generated README
+ * Uses authenticated session token from cookie
  */
+
+const crypto = require("crypto");
+
+const ALGORITHM = "aes-256-gcm";
 
 /**
  * Generates a unique request ID for tracing
@@ -12,6 +17,74 @@ const generateRequestId = () => {
 };
 
 /**
+ * Decrypts data encrypted with AES-256-GCM
+ * @param {string} encryptedText - Encrypted string (iv:authTag:ciphertext)
+ * @param {string} secret - Secret key
+ * @returns {string|null} Decrypted text or null if failed
+ */
+const decrypt = (encryptedText, secret) => {
+  try {
+    const [ivHex, authTagHex, ciphertext] = encryptedText.split(":");
+    if (!ivHex || !authTagHex || !ciphertext) return null;
+
+    const key = crypto.createHash("sha256").update(secret).digest();
+    const iv = Buffer.from(ivHex, "hex");
+    const authTag = Buffer.from(authTagHex, "hex");
+
+    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
+    decipher.setAuthTag(authTag);
+
+    let decrypted = decipher.update(ciphertext, "hex", "utf8");
+    decrypted += decipher.final("utf8");
+
+    return decrypted;
+  } catch (error) {
+    return null;
+  }
+};
+
+/**
+ * Parses cookies from the Cookie header
+ * @param {string} cookieHeader - Cookie header string
+ * @returns {Object} Parsed cookies
+ */
+const parseCookies = (cookieHeader) => {
+  const cookies = {};
+  if (!cookieHeader) return cookies;
+
+  cookieHeader.split(";").forEach((cookie) => {
+    const [name, ...rest] = cookie.trim().split("=");
+    cookies[name] = rest.join("=");
+  });
+
+  return cookies;
+};
+
+/**
+ * Extracts GitHub token from session cookie
+ * @param {Object} event - Netlify function event
+ * @returns {string|null} GitHub token or null
+ */
+const getTokenFromSession = (event) => {
+  const authSecret = process.env.AUTH_SECRET;
+  if (!authSecret) return null;
+
+  const cookies = parseCookies(event.headers.cookie);
+  const sessionCookie = cookies.session;
+  if (!sessionCookie) return null;
+
+  const decrypted = decrypt(sessionCookie, authSecret);
+  if (!decrypted) return null;
+
+  try {
+    const session = JSON.parse(decrypted);
+    return session.token;
+  } catch {
+    return null;
+  }
+};
+
+/**
  * Sanitizes error details to avoid leaking sensitive information
  * @param {string} details - Raw error details
  * @returns {string} Sanitized error details
@@ -19,13 +92,13 @@ const generateRequestId = () => {
 const sanitizeErrorDetails = (details) => {
   if (!details) return "Unknown error";
 
-  // Remove potential tokens, keys, or sensitive data from error messages
   return details
     .replace(/ghp_[a-zA-Z0-9]{36,}/g, "[REDACTED_TOKEN]")
     .replace(/github_pat_[a-zA-Z0-9_]{22,}/g, "[REDACTED_TOKEN]")
+    .replace(/gho_[a-zA-Z0-9]{36,}/g, "[REDACTED_TOKEN]")
     .replace(/Bearer\s+[a-zA-Z0-9-_]+/gi, "Bearer [REDACTED]")
     .replace(/"sha":\s*"[a-f0-9]{40}"/g, '"sha": "[REDACTED]"')
-    .substring(0, 500); // Limit length
+    .substring(0, 500);
 };
 
 /**
@@ -72,6 +145,7 @@ exports.handler = async (event) => {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Credentials": "true",
     "Content-Type": "application/json",
     "X-Request-Id": requestId,
   };
@@ -92,6 +166,21 @@ exports.handler = async (event) => {
     };
   }
 
+  // Get token from session
+  const token = getTokenFromSession(event);
+
+  if (!token) {
+    console.warn(`[${requestId}] No valid session found`);
+    return {
+      statusCode: 401,
+      headers,
+      body: JSON.stringify({
+        error: "Not authenticated. Please sign in with GitHub.",
+        requestId,
+      }),
+    };
+  }
+
   try {
     // Parse request body
     let body;
@@ -109,11 +198,10 @@ exports.handler = async (event) => {
       };
     }
 
-    const { token, owner, repo, content, defaultBranch } = body;
+    const { owner, repo, content, defaultBranch } = body;
 
     // Validate required fields
     const missingFields = [];
-    if (!token) missingFields.push("token");
     if (!owner) missingFields.push("owner");
     if (!repo) missingFields.push("repo");
     if (!content) missingFields.push("content");
@@ -127,23 +215,6 @@ exports.handler = async (event) => {
         headers,
         body: JSON.stringify({
           error: `Missing required fields: ${missingFields.join(", ")}`,
-          requestId,
-        }),
-      };
-    }
-
-    // Validate token format (basic check)
-    if (
-      !token.startsWith("ghp_") &&
-      !token.startsWith("github_pat_") &&
-      !token.startsWith("gho_")
-    ) {
-      console.warn(`[${requestId}] Invalid token format`);
-      return {
-        statusCode: 400,
-        headers,
-        body: JSON.stringify({
-          error: "Invalid GitHub token format",
           requestId,
         }),
       };
@@ -175,7 +246,8 @@ exports.handler = async (event) => {
           statusCode: 401,
           headers,
           body: JSON.stringify({
-            error: "GitHub token is invalid or expired",
+            error: "GitHub session expired. Please sign in again.",
+            sessionExpired: true,
             requestId,
           }),
         };
@@ -186,6 +258,16 @@ exports.handler = async (event) => {
           headers,
           body: JSON.stringify({
             error: `Branch '${baseBranch}' not found. Check the default branch name.`,
+            requestId,
+          }),
+        };
+      }
+      if (refResult.status === 403) {
+        return {
+          statusCode: 403,
+          headers,
+          body: JSON.stringify({
+            error: "You don't have permission to access this repository.",
             requestId,
           }),
         };
