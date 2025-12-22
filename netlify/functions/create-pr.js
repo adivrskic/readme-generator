@@ -1,68 +1,211 @@
+/**
+ * Netlify Function: create-pr
+ * Creates a GitHub Pull Request with the generated README
+ */
+
+/**
+ * Generates a unique request ID for tracing
+ * @returns {string} Request ID
+ */
+const generateRequestId = () => {
+  return `pr_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+};
+
+/**
+ * Sanitizes error details to avoid leaking sensitive information
+ * @param {string} details - Raw error details
+ * @returns {string} Sanitized error details
+ */
+const sanitizeErrorDetails = (details) => {
+  if (!details) return "Unknown error";
+
+  // Remove potential tokens, keys, or sensitive data from error messages
+  return details
+    .replace(/ghp_[a-zA-Z0-9]{36,}/g, "[REDACTED_TOKEN]")
+    .replace(/github_pat_[a-zA-Z0-9_]{22,}/g, "[REDACTED_TOKEN]")
+    .replace(/Bearer\s+[a-zA-Z0-9-_]+/gi, "Bearer [REDACTED]")
+    .replace(/"sha":\s*"[a-f0-9]{40}"/g, '"sha": "[REDACTED]"')
+    .substring(0, 500); // Limit length
+};
+
+/**
+ * Makes a GitHub API request with error handling
+ * @param {string} url - GitHub API URL
+ * @param {Object} options - Fetch options
+ * @param {string} requestId - Request ID for logging
+ * @param {string} operation - Description of the operation
+ * @returns {Promise<{ok: boolean, status: number, data: any}>}
+ */
+const githubFetch = async (url, options, requestId, operation) => {
+  console.log(`[${requestId}] ${operation}: ${options.method || "GET"} ${url}`);
+
+  const response = await fetch(url, options);
+
+  let data;
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    data = await response.json();
+  } else {
+    data = await response.text();
+  }
+
+  if (!response.ok) {
+    console.error(`[${requestId}] ${operation} failed:`, {
+      status: response.status,
+      error:
+        typeof data === "string"
+          ? sanitizeErrorDetails(data)
+          : data.message || "Unknown error",
+    });
+  } else {
+    console.log(`[${requestId}] ${operation} succeeded`);
+  }
+
+  return { ok: response.ok, status: response.status, data };
+};
+
 exports.handler = async (event) => {
+  const requestId = generateRequestId();
+  const startTime = Date.now();
+
   const headers = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Content-Type": "application/json",
+    "X-Request-Id": requestId,
   };
 
+  console.log(`[${requestId}] Incoming ${event.httpMethod} request`);
+
+  // Handle preflight
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 204, headers, body: "" };
   }
 
   if (event.httpMethod !== "POST") {
+    console.warn(`[${requestId}] Method not allowed: ${event.httpMethod}`);
     return {
       statusCode: 405,
       headers,
-      body: JSON.stringify({ error: "Method not allowed" }),
+      body: JSON.stringify({ error: "Method not allowed", requestId }),
     };
   }
 
   try {
-    const { token, owner, repo, content, defaultBranch } = JSON.parse(
-      event.body || "{}"
-    );
-
-    if (!token || !owner || !repo || !content) {
+    // Parse request body
+    let body;
+    try {
+      body = JSON.parse(event.body || "{}");
+    } catch (parseError) {
+      console.error(`[${requestId}] Failed to parse request body`);
       return {
         statusCode: 400,
         headers,
-        body: JSON.stringify({ error: "Missing required fields" }),
+        body: JSON.stringify({
+          error: "Invalid JSON in request body",
+          requestId,
+        }),
       };
     }
+
+    const { token, owner, repo, content, defaultBranch } = body;
+
+    // Validate required fields
+    const missingFields = [];
+    if (!token) missingFields.push("token");
+    if (!owner) missingFields.push("owner");
+    if (!repo) missingFields.push("repo");
+    if (!content) missingFields.push("content");
+
+    if (missingFields.length > 0) {
+      console.warn(
+        `[${requestId}] Missing required fields: ${missingFields.join(", ")}`
+      );
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          error: `Missing required fields: ${missingFields.join(", ")}`,
+          requestId,
+        }),
+      };
+    }
+
+    // Validate token format (basic check)
+    if (
+      !token.startsWith("ghp_") &&
+      !token.startsWith("github_pat_") &&
+      !token.startsWith("gho_")
+    ) {
+      console.warn(`[${requestId}] Invalid token format`);
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          error: "Invalid GitHub token format",
+          requestId,
+        }),
+      };
+    }
+
+    console.log(`[${requestId}] Creating PR for ${owner}/${repo}`);
 
     const githubHeaders = {
       Authorization: `Bearer ${token}`,
       Accept: "application/vnd.github.v3+json",
       "Content-Type": "application/json",
+      "User-Agent": "README-Generator/1.0",
     };
 
     const baseBranch = defaultBranch || "main";
     const newBranch = `readme-update-${Date.now()}`;
 
-    // 1. Get the latest commit SHA from the base branch
-    const refResponse = await fetch(
+    // Step 1: Get the latest commit SHA from the base branch
+    const refResult = await githubFetch(
       `https://api.github.com/repos/${owner}/${repo}/git/ref/heads/${baseBranch}`,
-      { headers: githubHeaders }
+      { headers: githubHeaders },
+      requestId,
+      "Get branch ref"
     );
 
-    if (!refResponse.ok) {
-      const error = await refResponse.text();
+    if (!refResult.ok) {
+      if (refResult.status === 401) {
+        return {
+          statusCode: 401,
+          headers,
+          body: JSON.stringify({
+            error: "GitHub token is invalid or expired",
+            requestId,
+          }),
+        };
+      }
+      if (refResult.status === 404) {
+        return {
+          statusCode: 404,
+          headers,
+          body: JSON.stringify({
+            error: `Branch '${baseBranch}' not found. Check the default branch name.`,
+            requestId,
+          }),
+        };
+      }
       return {
-        statusCode: refResponse.status,
+        statusCode: refResult.status,
         headers,
         body: JSON.stringify({
-          error: "Failed to get branch ref",
-          details: error,
+          error: "Failed to get branch reference",
+          details: sanitizeErrorDetails(JSON.stringify(refResult.data)),
+          requestId,
         }),
       };
     }
 
-    const refData = await refResponse.json();
-    const baseSha = refData.object.sha;
+    const baseSha = refResult.data.object.sha;
+    console.log(`[${requestId}] Base SHA: ${baseSha.substring(0, 7)}...`);
 
-    // 2. Create a new branch
-    const createBranchResponse = await fetch(
+    // Step 2: Create a new branch
+    const createBranchResult = await githubFetch(
       `https://api.github.com/repos/${owner}/${repo}/git/refs`,
       {
         method: "POST",
@@ -71,35 +214,55 @@ exports.handler = async (event) => {
           ref: `refs/heads/${newBranch}`,
           sha: baseSha,
         }),
-      }
+      },
+      requestId,
+      "Create branch"
     );
 
-    if (!createBranchResponse.ok) {
-      const error = await createBranchResponse.text();
+    if (!createBranchResult.ok) {
+      if (createBranchResult.status === 422) {
+        return {
+          statusCode: 422,
+          headers,
+          body: JSON.stringify({
+            error: "Branch already exists or invalid reference",
+            requestId,
+          }),
+        };
+      }
       return {
-        statusCode: createBranchResponse.status,
+        statusCode: createBranchResult.status,
         headers,
         body: JSON.stringify({
           error: "Failed to create branch",
-          details: error,
+          details: sanitizeErrorDetails(
+            JSON.stringify(createBranchResult.data)
+          ),
+          requestId,
         }),
       };
     }
 
-    // 3. Check if README.md exists and get its SHA if it does
+    console.log(`[${requestId}] Created branch: ${newBranch}`);
+
+    // Step 3: Check if README.md exists and get its SHA
     let fileSha = null;
-    const fileCheckResponse = await fetch(
+    const fileCheckResult = await githubFetch(
       `https://api.github.com/repos/${owner}/${repo}/contents/README.md?ref=${newBranch}`,
-      { headers: githubHeaders }
+      { headers: githubHeaders },
+      requestId,
+      "Check existing README"
     );
 
-    if (fileCheckResponse.ok) {
-      const fileData = await fileCheckResponse.json();
-      fileSha = fileData.sha;
+    if (fileCheckResult.ok) {
+      fileSha = fileCheckResult.data.sha;
+      console.log(`[${requestId}] Existing README found, will update`);
+    } else {
+      console.log(`[${requestId}] No existing README, will create new`);
     }
 
-    // 4. Create or update README.md
-    const contentBase64 = Buffer.from(content).toString("base64");
+    // Step 4: Create or update README.md
+    const contentBase64 = Buffer.from(content, "utf-8").toString("base64");
     const updateFileBody = {
       message: "Update README.md via README Generator",
       content: contentBase64,
@@ -110,70 +273,109 @@ exports.handler = async (event) => {
       updateFileBody.sha = fileSha;
     }
 
-    const updateFileResponse = await fetch(
+    const updateFileResult = await githubFetch(
       `https://api.github.com/repos/${owner}/${repo}/contents/README.md`,
       {
         method: "PUT",
         headers: githubHeaders,
         body: JSON.stringify(updateFileBody),
-      }
+      },
+      requestId,
+      "Update README file"
     );
 
-    if (!updateFileResponse.ok) {
-      const error = await updateFileResponse.text();
+    if (!updateFileResult.ok) {
+      // Attempt to clean up the branch we created
+      console.warn(
+        `[${requestId}] File update failed, attempting to clean up branch`
+      );
+      await githubFetch(
+        `https://api.github.com/repos/${owner}/${repo}/git/refs/heads/${newBranch}`,
+        { method: "DELETE", headers: githubHeaders },
+        requestId,
+        "Cleanup branch"
+      );
+
       return {
-        statusCode: updateFileResponse.status,
+        statusCode: updateFileResult.status,
         headers,
         body: JSON.stringify({
-          error: "Failed to update file",
-          details: error,
+          error: "Failed to update README file",
+          details: sanitizeErrorDetails(JSON.stringify(updateFileResult.data)),
+          requestId,
         }),
       };
     }
 
-    // 5. Create pull request
-    const prResponse = await fetch(
+    // Step 5: Create pull request
+    const prResult = await githubFetch(
       `https://api.github.com/repos/${owner}/${repo}/pulls`,
       {
         method: "POST",
         headers: githubHeaders,
         body: JSON.stringify({
           title: "Update README.md",
-          body: "This README was generated using README Generator.",
+          body: `## 📝 README Update
+
+This README was automatically generated using [README Generator](https://github.com).
+
+### Changes
+- Updated README.md with new content
+
+---
+*Generated on ${new Date().toISOString().split("T")[0]}*`,
           head: newBranch,
           base: baseBranch,
         }),
-      }
+      },
+      requestId,
+      "Create pull request"
     );
 
-    if (!prResponse.ok) {
-      const error = await prResponse.text();
+    if (!prResult.ok) {
       return {
-        statusCode: prResponse.status,
+        statusCode: prResult.status,
         headers,
-        body: JSON.stringify({ error: "Failed to create PR", details: error }),
+        body: JSON.stringify({
+          error: "Failed to create pull request",
+          details: sanitizeErrorDetails(JSON.stringify(prResult.data)),
+          requestId,
+        }),
       };
     }
 
-    const prData = await prResponse.json();
+    const elapsed = Date.now() - startTime;
+    console.log(`[${requestId}] PR created successfully in ${elapsed}ms:`, {
+      prNumber: prResult.data.number,
+      prUrl: prResult.data.html_url,
+    });
 
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        prUrl: prData.html_url,
-        prNumber: prData.number,
+        prUrl: prResult.data.html_url,
+        prNumber: prResult.data.number,
+        branch: newBranch,
+        requestId,
       }),
     };
   } catch (error) {
-    console.error("Function error:", error);
+    const elapsed = Date.now() - startTime;
+    console.error(`[${requestId}] Unhandled error after ${elapsed}ms:`, {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+    });
+
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({
         error: "Internal server error",
-        details: error.message,
+        details: sanitizeErrorDetails(error.message),
+        requestId,
       }),
     };
   }

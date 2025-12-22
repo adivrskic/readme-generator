@@ -1,3 +1,18 @@
+/**
+ * README Generation Service
+ * Handles prompt building and API communication for README generation
+ */
+
+/**
+ * Generates a README for the given repository data
+ * @param {Object} repoData - Repository information from GitHub API
+ * @param {Array} sections - Array of {id, enabled} section configurations
+ * @param {string} tone - Writing tone (professional, friendly, technical, minimal)
+ * @param {string} badgeStyle - Shield.io badge style
+ * @param {boolean} useEmojis - Whether to include emojis in headers
+ * @param {boolean} includeToc - Whether to include table of contents
+ * @returns {Promise<string>} Generated README markdown
+ */
 export const generateReadme = async (
   repoData,
   sections,
@@ -6,10 +21,27 @@ export const generateReadme = async (
   useEmojis = false,
   includeToc = false
 ) => {
+  // Validate inputs
+  if (!repoData || !repoData.name) {
+    throw new Error("Invalid repository data provided");
+  }
+
+  if (!Array.isArray(sections)) {
+    throw new Error("Sections must be an array");
+  }
+
   // sections is now an array of { id, enabled } objects - preserve order
   const enabledSections = sections
     .filter((section) => section.enabled)
     .map((section) => section.id);
+
+  if (enabledSections.length === 0) {
+    throw new Error("At least one section must be enabled");
+  }
+
+  console.log("[README] Generating README for:", repoData.fullName);
+  console.log("[README] Enabled sections:", enabledSections.join(", "));
+  console.log("[README] Options:", { tone, badgeStyle, useEmojis, includeToc });
 
   const prompt = buildPrompt(
     repoData,
@@ -29,19 +61,105 @@ export const generateReadme = async (
   });
 
   if (!response.ok) {
-    throw new Error("Failed to generate README. Please try again.");
+    let errorMessage = "Failed to generate README";
+    try {
+      const errorData = await response.json();
+      errorMessage = errorData.error || errorData.details || errorMessage;
+      console.error("[README] API error:", response.status, errorData);
+    } catch (parseError) {
+      console.error("[README] API error (non-JSON):", response.status);
+    }
+    throw new Error(`${errorMessage} (Status: ${response.status})`);
   }
 
   const data = await response.json();
-  const content = data.content[0]?.text;
+  const content = data.content?.[0]?.text;
 
   if (!content) {
-    throw new Error("No content generated. Please try again.");
+    console.error("[README] Empty response from API:", data);
+    throw new Error(
+      "No content generated. The API returned an empty response."
+    );
+  }
+
+  console.log(
+    "[README] Successfully generated README, length:",
+    content.length
+  );
+
+  // Post-process the content to fix any anchor issues if TOC is enabled
+  if (includeToc && useEmojis) {
+    return fixTocAnchors(content);
   }
 
   return content;
 };
 
+/**
+ * Post-processes README content to fix TOC anchor links for GitHub compatibility
+ * GitHub strips emojis from anchors and replaces them with empty strings,
+ * resulting in anchors like "#-features" for "## 🚀 Features"
+ * @param {string} content - The generated README content
+ * @returns {string} Content with fixed anchor links
+ */
+const fixTocAnchors = (content) => {
+  console.log("[README] Post-processing TOC anchors for GitHub compatibility");
+
+  // Extract all headers with emojis
+  const headerRegex = /^(#{1,6})\s+(.+)$/gm;
+  const headers = [];
+  let match;
+
+  while ((match = headerRegex.exec(content)) !== null) {
+    headers.push({
+      full: match[0],
+      level: match[1].length,
+      text: match[2].trim(),
+    });
+  }
+
+  // Build a map of text-based anchors to GitHub-compatible anchors
+  const anchorMap = new Map();
+
+  for (const header of headers) {
+    // Simple anchor (what we might have generated): lowercase, hyphens for spaces
+    const simpleAnchor = header.text
+      .toLowerCase()
+      .replace(/[^\w\s-]/g, "") // Remove special chars including emojis
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+
+    // GitHub anchor: emojis become empty, resulting in leading hyphen
+    const githubAnchor = header.text
+      .toLowerCase()
+      .replace(/\p{Emoji_Presentation}|\p{Emoji}\uFE0F?/gu, "") // Remove emojis
+      .trim()
+      .replace(/[^\w\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
+
+    if (simpleAnchor !== githubAnchor && simpleAnchor) {
+      anchorMap.set(simpleAnchor, githubAnchor);
+    }
+  }
+
+  // Replace anchors in TOC links
+  let fixedContent = content;
+  for (const [simple, github] of anchorMap) {
+    // Match markdown links with the simple anchor
+    const linkRegex = new RegExp(`\\]\\(#${simple}\\)`, "g");
+    fixedContent = fixedContent.replace(linkRegex, `](#${github})`);
+  }
+
+  return fixedContent;
+};
+
+/**
+ * Returns tone-specific writing instructions
+ * @param {string} tone - The selected tone
+ * @returns {string} Formatted tone instructions for the prompt
+ */
 const getToneInstructions = (tone) => {
   const toneGuides = {
     professional: {
@@ -96,6 +214,16 @@ ${selected.guidelines.map((g) => `- ${g}`).join("\n")}
 `;
 };
 
+/**
+ * Builds the complete prompt for README generation
+ * @param {Object} repoData - Repository data
+ * @param {Array} enabledSections - List of enabled section IDs
+ * @param {string} tone - Writing tone
+ * @param {string} badgeStyle - Badge style
+ * @param {boolean} useEmojis - Whether to use emojis
+ * @param {boolean} includeToc - Whether to include TOC
+ * @returns {string} Complete prompt string
+ */
 const buildPrompt = (
   repoData,
   enabledSections,
@@ -125,12 +253,12 @@ const buildPrompt = (
     .filter(Boolean)
     .join(", ");
 
-  const languageList = Object.entries(repoData.languages)
+  const languageList = Object.entries(repoData.languages || {})
     .sort((a, b) => b[1] - a[1])
     .map(([lang, bytes]) => `${lang}: ${bytes} bytes`)
     .join(", ");
 
-  const configSummary = Object.entries(repoData.configFiles)
+  const configSummary = Object.entries(repoData.configFiles || {})
     .map(([file, content]) => {
       const truncated =
         content.length > 2000
@@ -140,9 +268,11 @@ const buildPrompt = (
     })
     .join("\n\n");
 
-  const rootFiles = repoData.files.filter((f) => !f.includes("/")).join(", ");
+  const rootFiles = (repoData.files || [])
+    .filter((f) => !f.includes("/"))
+    .join(", ");
 
-  const topDirectories = repoData.directories
+  const topDirectories = (repoData.directories || [])
     .filter((d) => !d.includes("/"))
     .join(", ");
 
@@ -160,7 +290,7 @@ EMOJI FORMATTING: ENABLED
 Add relevant emojis to section headers to make them visually engaging.
 Examples:
 - ## 🚀 Features
-- ## 📦 Installation
+- ## 📦 Installation  
 - ## 💻 Usage
 - ## 🛠️ Tech Stack
 - ## 📖 API Reference
@@ -178,24 +308,31 @@ Do NOT use any emojis in section headers. Keep headers plain text only.
 Example: "## Features" not "## 🚀 Features"
 `;
 
+  // Fixed TOC instructions with proper GitHub anchor format
   const tocInstructions = includeToc
     ? `
 TABLE OF CONTENTS: ENABLED
 Include a Table of Contents section immediately after the project title/badges.
 Format it as a bulleted list with markdown anchor links to each section.
-Example:
-## Table of Contents
 
-- [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-
-Make sure the anchor links match the actual section headers (lowercase, hyphens for spaces).
+CRITICAL: GitHub anchor format rules:
+- Convert to lowercase
+- Replace spaces with hyphens
+- Remove special characters except hyphens
 ${
   useEmojis
-    ? "Note: Anchor links should NOT include emojis, just the text portion."
-    : ""
+    ? `- For headers with emojis like "## 🚀 Features", the anchor becomes "#-features" (emoji is removed, leaving a leading hyphen)
+- Example TOC for emoji headers:
+  - [🚀 Features](#-features)
+  - [📦 Installation](#-installation)
+  - [💻 Usage](#-usage)`
+    : `- Example TOC:
+  - [Features](#features)
+  - [Installation](#installation)
+  - [Usage](#usage)`
 }
+
+Make sure the anchor links EXACTLY match how GitHub will render them.
 `
     : "";
 
@@ -209,7 +346,7 @@ REPOSITORY INFO:
 - Stars: ${repoData.stars}
 - Forks: ${repoData.forks}
 - License: ${repoData.license || "Not specified"}
-- Topics: ${repoData.topics.join(", ") || "None"}
+- Topics: ${(repoData.topics || []).join(", ") || "None"}
 - Homepage: ${repoData.homepage || "None"}
 - Default branch: ${repoData.defaultBranch}
 
